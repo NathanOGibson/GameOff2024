@@ -12,7 +12,7 @@ AGOCharacter::AGOCharacter()
 void AGOCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	// Test
 }
 
 void AGOCharacter::Tick(float DeltaTime)
