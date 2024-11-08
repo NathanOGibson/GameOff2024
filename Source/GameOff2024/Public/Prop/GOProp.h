@@ -18,13 +18,16 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere, Category = "Prop")
 	TObjectPtr<USceneComponent> PropSceneComponent;
 
 	UPROPERTY(EditAnywhere, Category = "Prop")
 	TObjectPtr<UStaticMeshComponent> PropMesh;
 
+	UPROPERTY(EditAnywhere, Category = "Prop")
+	FString PropName = "";
+
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	FORCEINLINE FString GetPropName() const { return PropName; }
 };
