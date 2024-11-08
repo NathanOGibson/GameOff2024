@@ -46,7 +46,7 @@ private:
 
 	void SetSpawnPoints();
 
-	USceneComponent* GetFurthestSpawnPoint(USceneComponent* StartPoint, TArray<USceneComponent*> ChildrenPoints);
+	USceneComponent* GetFurthestSpawnPoint(TArray<USceneComponent*>& StartPoint, TArray<USceneComponent*>& ChildrenPoints);
 
 	void SetPropPositions();
 
