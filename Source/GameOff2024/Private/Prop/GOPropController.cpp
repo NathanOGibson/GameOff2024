@@ -199,14 +199,14 @@ void AGOPropController::SetPropPositions()
 	// If a valid second location is found, place the second extra prop there
 	if (SecondExtraPropLocation)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("LargeDist")));
+		//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("LargeDist")));
 		PlacementProps[1]->SetActorLocation(SecondExtraPropLocation->GetComponentLocation());
 		PlacementProps[1]->SetActorRotation(SecondExtraPropLocation->GetComponentRotation());
 		ChildrenSpawnLocations.Remove(SecondExtraPropLocation);
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Rand")));
+		//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Rand")));
 		// If no valid far location is found, fallback to a random remaining location
 		int32 FallbackIndex = FMath::RandRange(0, ChildrenSpawnLocations.Num() - 1);
 		USceneComponent* FallbackLocation = ChildrenSpawnLocations[FallbackIndex];
