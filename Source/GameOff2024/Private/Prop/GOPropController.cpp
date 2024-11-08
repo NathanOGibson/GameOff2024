@@ -102,11 +102,13 @@ void AGOPropController::SetSpawnPoints()
 
 	// Add the randomly selected spawn point to the list of chosen spawn locations
 	ChildrenSpawnLocations.Add(CurrentChild);
+	//GEngine->AddOnScreenDebugMessage(-1, 50.f, FColor::Red, FString::Printf(TEXT("Spawn Point: %s"), *CurrentChild->GetName()));
+
 	// Remove the selected child from the available components
 	ChildrenComponents.Remove(CurrentChild);
 
 	// Continue to add spawn points until we have 6, or there are no more children to choose from
-	while (ChildrenSpawnLocations.Num() < 6 && CurrentChild != nullptr && ChildrenComponents.Num() > 0)
+	while (ChildrenSpawnLocations.Num() < PropsToSpawn && CurrentChild != nullptr && ChildrenComponents.Num() > 0)
 	{
 		// Get the spawn point furthest from the already chosen points
 		CurrentChild = GetFurthestSpawnPoint(ChildrenSpawnLocations, ChildrenComponents);
@@ -114,9 +116,12 @@ void AGOPropController::SetSpawnPoints()
 		// Display the name of the newly selected spawn point for debugging
 
 		// Add the furthest spawn point to the list and remove it from the available components
+		//GEngine->AddOnScreenDebugMessage(-1, 50.f, FColor::Red, FString::Printf(TEXT("Spawn Point: %s"), *CurrentChild->GetName()));
 		ChildrenSpawnLocations.Add(CurrentChild);
 		ChildrenComponents.Remove(CurrentChild);
 	}
+
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Spawn Points: %d"), ChildrenSpawnLocations.Num()));
 }
 
 USceneComponent* AGOPropController::GetFurthestSpawnPoint(TArray<USceneComponent*>& StartPoints, TArray<USceneComponent*>& ChildrenPoints)
@@ -215,14 +220,19 @@ void AGOPropController::SetPropPositions()
 		ChildrenSpawnLocations.RemoveAt(FallbackIndex);
 	}
 
+	// Remove the first two extra props from PlacementProps to prevent further reuse
+	PlacementProps.RemoveAt(0, 2);
+	PropsToSpawn -= 2;
+
 	// Now, fill the remaining slots with other unique props
-	while (PlacementProps.Num() < 6)
+	while (PlacementProps.Num() < PropsToSpawn)
 	{
 		AGOProp* Prop = PickProp();
 
 		// Ensure that the prop is not already chosen, not extra, and not in PlacementProps
 		if (!ExtraProps.Contains(Prop) && Prop != ChosenProp && !PlacementProps.Contains(Prop))
 		{
+			//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Prop: %s"), *Prop->GetName()));
 			PlacementProps.Add(Prop);
 		}
 	}
@@ -237,6 +247,8 @@ void AGOPropController::SetPropPositions()
 			// Pick a random prop from the placement props array
 			int32 RandomIndex = FMath::RandRange(0, PlacementProps.Num() - 1);
 			TObjectPtr<AGOProp> Prop = PlacementProps[RandomIndex];
+
+			//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Prop: %s"), *Prop->GetName()));
 
 			// Place the prop at the selected spawn location
 			Prop->SetActorLocation(Child->GetComponentLocation());

@@ -22,6 +22,9 @@ protected:
 private:
 	TObjectPtr<USceneComponent> ControllerSceneComponent;
 
+	UPROPERTY(EditAnywhere, Category = "Prop")
+	int32 PropsToSpawn = 6;
+
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
 	TArray<TObjectPtr<AGOProp>> AllProps;
 
