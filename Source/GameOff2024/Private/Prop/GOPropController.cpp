@@ -17,15 +17,32 @@ AGOPropController::AGOPropController()
 void AGOPropController::BeginPlay()
 {
 	Super::BeginPlay();
-	GetPropReferences();
-	AssignChosenAndExtraProps();
-
-	ResetPropPositions();
-	SetSpawnPoints();
-	SetPropPositions();
+	PropsSavedSpawnCount = PropsToSpawn;
 }
 
-void AGOPropController::GetPropReferences()
+void AGOPropController::ResetAndInitialiseProps()
+{
+	InitialisePropReferences();
+	ResetPropLocations();
+}
+
+void AGOPropController::SetupPropsAndSpawns()
+{
+	// Reset the number of props to spawn
+	PropsToSpawn = PropsSavedSpawnCount;
+
+	SelectPrimaryAndBackupProps();
+	InitialiseSpawnLocations();
+	SetPropLocations();
+}
+
+void AGOPropController::ClearAndResetProps()
+{
+	ResetPropLocations();
+	ClearPropData();
+}
+
+void AGOPropController::InitialisePropReferences()
 {
 	// Array to hold all actors of class AGOProp found in the world
 	TArray<AActor*> OutActors;
@@ -51,22 +68,38 @@ TObjectPtr<AGOProp> AGOPropController::PickProp()
 }
 
 // Will be called on the Booth Entity
-void AGOPropController::AssignChosenAndExtraProps()
+void AGOPropController::SelectPrimaryAndBackupProps()
 {
 	// Pick the main chosen prop
 	ChosenProp = PickProp();
 
 	// Loop until two unique extra props are selected
-	while (ExtraProps.Num() < 2)
+	while (BackupProps.Num() < 2)
 	{
 		AGOProp* Prop = PickProp();
 
 		// Add the prop to ExtraProps if it's not already there and isn't the chosen prop
-		if (!ExtraProps.Contains(Prop) && Prop != ChosenProp) ExtraProps.Add(Prop);
+		if (!BackupProps.Contains(Prop) && Prop != ChosenProp) BackupProps.Add(Prop);
 	}
 }
 
-void AGOPropController::ResetPropPositions()
+void AGOPropController::ClearPropData()
+{
+	// Clear the prop lists
+	BackupProps.Empty();      // Clears the array of extra props
+
+	// Reset the chosen prop
+	ChosenProp = nullptr;    // Resets the pointer to the chosen prop to null
+
+	// Clear spawn locations if needed
+	ChildrenSpawnLocations.Empty(); // Clears the spawn locations array if you want to reset that too
+
+	// Add any additional variables or arrays to clear/reset here as needed
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Prop data cleared"));
+}
+
+void AGOPropController::ResetPropLocations()
 {
 	// Loop through all props and reset their location and rotation
 	for (AGOProp* Prop : AllProps)
@@ -82,7 +115,7 @@ void AGOPropController::ResetPropPositions()
 	}
 }
 
-void AGOPropController::SetSpawnPoints()
+void AGOPropController::InitialiseSpawnLocations()
 {
 	// Get all child components of this actor
 	TArray<USceneComponent*> ChildrenComponents;
@@ -165,15 +198,15 @@ USceneComponent* AGOPropController::GetFurthestSpawnPoint(TArray<USceneComponent
 	return FurthestSpawnPoint;  // Return the spawn point that is furthest from the start points
 }
 
-void AGOPropController::SetPropPositions()
+void AGOPropController::SetPropLocations()
 {
 	// Define a minimum distance that extra props should maintain between each other
 	const float MinDistanceBetweenExtraProps = 2000.f;
 
 	// Start by adding the two extra props to the placement list
 	TArray<TObjectPtr<AGOProp>> PlacementProps;
-	PlacementProps.Add(ExtraProps[0]);
-	PlacementProps.Add(ExtraProps[1]);
+	PlacementProps.Add(BackupProps[0]);
+	PlacementProps.Add(BackupProps[1]);
 
 	// Pick random locations for extra props ensuring they are far apart
 	USceneComponent* FirstExtraPropLocation = nullptr;
@@ -239,7 +272,7 @@ void AGOPropController::SetPropPositions()
 		AGOProp* Prop = PickProp();
 
 		// Ensure that the prop is not already chosen, not extra, and not in PlacementProps
-		if (!ExtraProps.Contains(Prop) && Prop != ChosenProp && !PlacementProps.Contains(Prop))
+		if (!BackupProps.Contains(Prop) && Prop != ChosenProp && !PlacementProps.Contains(Prop))
 		{
 			//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Prop: %s"), *Prop->GetName()));
 			PlacementProps.Add(Prop);
