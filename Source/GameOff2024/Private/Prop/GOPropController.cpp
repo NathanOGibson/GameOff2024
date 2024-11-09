@@ -222,7 +222,16 @@ void AGOPropController::SetPropPositions()
 
 	// Remove the first two extra props from PlacementProps to prevent further reuse
 	PlacementProps.RemoveAt(0, 2);
-	PropsToSpawn -= 2;
+
+	// Catch for if the spawn number is more than the total props
+	if (PropsToSpawn >= AllProps.Num())
+	{
+		PropsToSpawn = AllProps.Num() - 3;
+	}
+	else
+	{
+		PropsToSpawn -= 2;
+	}
 
 	// Now, fill the remaining slots with other unique props
 	while (PlacementProps.Num() < PropsToSpawn)
