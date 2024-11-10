@@ -26,7 +26,7 @@ void AGOPropController::ResetAndInitialiseProps()
 	ResetPropLocations();
 }
 
-void AGOPropController::SetupPropsAndSpawns()
+void AGOPropController::SetupPropsAndSpawns(AGOProp*& ChosenTargetProp, AGOProp*& FirstBackupProp, AGOProp*& SecondBackupProp)
 {
 	// Reset the number of props to spawn
 	PropsToSpawn = PropsSavedSpawnCount;
@@ -34,6 +34,10 @@ void AGOPropController::SetupPropsAndSpawns()
 	SelectPrimaryAndBackupProps();
 	InitialiseSpawnLocations();
 	SetPropLocations();
+
+	ChosenTargetProp = ChosenProp;
+	FirstBackupProp = BackupProps[0];
+	SecondBackupProp = BackupProps[1];
 }
 
 void AGOPropController::ClearAndResetProps()
@@ -96,7 +100,7 @@ void AGOPropController::ClearPropData()
 
 	// Add any additional variables or arrays to clear/reset here as needed
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Prop data cleared"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Prop data cleared"));
 }
 
 void AGOPropController::ResetPropLocations()

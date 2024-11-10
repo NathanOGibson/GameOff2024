@@ -14,6 +14,9 @@ class GAMEOFF2024_API AGOProp : public AActor
 public:
 	AGOProp();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Prop")
+	FString PropName = "";
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -23,8 +26,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Prop")
 	TObjectPtr<UStaticMeshComponent> PropMesh;
 
-	UPROPERTY(EditAnywhere, Category = "Prop")
-	FString PropName = "";
+
 
 public:
 	virtual void Tick(float DeltaTime) override;

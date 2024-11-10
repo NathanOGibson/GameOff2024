@@ -23,7 +23,7 @@ protected:
 	void ResetAndInitialiseProps();
 
 	UFUNCTION(BlueprintCallable, Category = "PropController")
-	void SetupPropsAndSpawns();
+	void SetupPropsAndSpawns(AGOProp*& ChosenTargetProp, AGOProp*& FirstBackupProp, AGOProp*& SecondBackupProp);
 
 	UFUNCTION(BlueprintCallable, Category = "PropController")
 	void ClearAndResetProps();
