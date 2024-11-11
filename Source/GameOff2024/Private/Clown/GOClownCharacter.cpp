@@ -37,7 +37,7 @@ void AGOClownCharacter::Tick(float DeltaTime)
 	//	// Patrol if far away from the player
 	//	ClownState = EClownState::ECS_GetPatrolPoint;
 	//}
-
+	FVector NewMovePoint;
 	switch (ClownState)
 	{
 	case EClownState::ECS_Idle:
@@ -45,15 +45,17 @@ void AGOClownCharacter::Tick(float DeltaTime)
 		break;
 
 	case EClownState::ECS_GetPatrolPoint:
-		ClownAIController->GetPatrolPoint();
-		ClownState = EClownState::ECS_Patrol;
+		NewMovePoint = ClownAIController->GetPatrolPoint();
+		if (NewMovePoint != FVector::ZeroVector) ClownState = EClownState::ECS_Patrol;
+		ClownAIController->IncraseMaxPatrolAngle();
 		break;
 
 	case EClownState::ECS_Patrol:
+		ClownAIController->ResetMaxPatrolAngle();
 		ClownAIController->MoveToPatrolPoint();
 		if (ClownAIController->HasReachedPatrolPoint(100.f))
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Patrol point reached!"));
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Patrol point reached!"));
 			ClownState = EClownState::ECS_Idle;
 		}
 		break;

@@ -11,6 +11,7 @@
  */
 
 class AGOClownCharacter;
+class USplineComponent;
 
 UCLASS()
 class GAMEOFF2024_API AGOClownAIController : public AAIController
@@ -27,14 +28,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Function to control patrolling
-	void GetPatrolPoint();
+	FVector GetPatrolPoint();
 
 	void MoveToPatrolPoint();
 
 
+	FVector FirstPathPoint;
 	FVector PatrolPoint;
 
 	void MoveToLocationSmoothly(const FVector& TargetLocation);
+
+	void IncraseMaxPatrolAngle();
+
+	void ResetMaxPatrolAngle() { MaxPatrolAngle = 30.0f; }
 
 	bool HasReachedPatrolPoint(float ReachThreshold);
 
@@ -45,5 +51,9 @@ public:
 	void SearchForPlayer();
 
 private:
-	float RotationSpeed = 2.2f; // Speed of rotation interpolation
+	float RotationSpeed = 4.f; // Speed of rotation interpolation
+
+	float MaxPatrolAngle = 30.0f;
+
+	TObjectPtr<USplineComponent> SplinePath;
 };
