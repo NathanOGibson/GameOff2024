@@ -41,7 +41,7 @@ void AGOClownCharacter::Tick(float DeltaTime)
 	switch (ClownState)
 	{
 	case EClownState::ECS_Idle:
-		ClownState = EClownState::ECS_GetPatrolPoint;
+		DelayEvent();
 		break;
 
 	case EClownState::ECS_GetPatrolPoint:
@@ -78,4 +78,9 @@ void AGOClownCharacter::JumpscarePlayer()
 		// E.g., play jumpscare animation, sound, and possibly reduce the player's health
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Jumpscare triggered!"));
 	}
+}
+
+void AGOClownCharacter::IdleDelay()
+{
+	ClownState = EClownState::ECS_GetPatrolPoint;
 }

@@ -36,8 +36,6 @@ public:
 	FVector FirstPathPoint;
 	FVector PatrolPoint;
 
-	void MoveToLocationSmoothly(const FVector& TargetLocation);
-
 	void IncraseMaxPatrolAngle();
 
 	void ResetMaxPatrolAngle() { MaxPatrolAngle = 30.0f; }
@@ -51,9 +49,11 @@ public:
 	void SearchForPlayer();
 
 private:
-	float RotationSpeed = 4.f; // Speed of rotation interpolation
+	float RotationSpeed = 6.f; // Speed of rotation interpolation
 
 	float MaxPatrolAngle = 30.0f;
+
+	int32 CurrentPatrolIndex = 0;
 
 	TObjectPtr<USplineComponent> SplinePath;
 };

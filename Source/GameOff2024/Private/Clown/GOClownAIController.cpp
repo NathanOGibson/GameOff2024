@@ -87,76 +87,46 @@ FVector AGOClownAIController::GetPatrolPoint()
 
 void AGOClownAIController::MoveToPatrolPoint()
 {
-	if (!PatrolPoint.IsZero())
+	if (PatrolPoint.IsZero()) return;
+
+	// Ensure there are multiple spline points available
+	if (SplinePath->GetNumberOfSplinePoints() > 1)
 	{
 		FVector CurrentLocation = GetPawn()->GetActorLocation();
 
-		// Get the vector pointing from the AI to the first path point
-		FVector DirectionToFirstPathPoint = FirstPathPoint - CurrentLocation;
-		DirectionToFirstPathPoint.Z = 0; // Ensure it's horizontal by zeroing out the Z axis
+		// Get the current spline point based on the patrol index
+		FVector NextPathPoint = SplinePath->GetLocationAtSplinePoint(CurrentPatrolIndex, ESplineCoordinateSpace::World);
+		FVector DirectionToNextPoint = NextPathPoint - CurrentLocation;
+		DirectionToNextPoint.Z = 0; // Keep rotation on the horizontal plane
 
-		// Calculate the rotation needed to face the first path point
-		FRotator TargetRotation = DirectionToFirstPathPoint.Rotation();
+		// Calculate the desired rotation toward the next path point
+		FRotator TargetRotation = DirectionToNextPoint.Rotation();
 		FRotator CurrentRotation = GetPawn()->GetActorRotation();
 
-		// Calculate the shortest rotation path (interpolating to target rotation)
+		// Smoothly interpolate between current and target rotation
 		FRotator SmoothedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), RotationSpeed);
+		GetPawn()->SetActorRotation(SmoothedRotation); // Apply the smoothed rotation
 
-		// Apply the smoothed rotation
-		GetPawn()->SetActorRotation(SmoothedRotation);
-
-		// Move towards the patrol point when aligned (use a tolerance value)
-		float RotationDifference = FMath::Abs(FMath::FindDeltaAngleDegrees(CurrentRotation.Yaw, TargetRotation.Yaw));
-		if (RotationDifference < 5.0f) // Only start moving when the rotation is aligned
+		MoveToLocation(NextPathPoint); // Move AI towards the next point in the path
+		// Check if AI is close enough to face the next point and the rotation is almost complete
+		if (FMath::Abs(FRotator::NormalizeAxis(CurrentRotation.Yaw - TargetRotation.Yaw)) < 5.0f)
 		{
-			MoveToLocation(PatrolPoint); // Move AI towards patrol point
+
+			// Manually control the rotation, move AI towards the next point
+		}
+
+		// If close enough to the current path point, move to the next point in the spline path
+		if (FVector::Dist(CurrentLocation, NextPathPoint) < 100.0f) // Threshold for considering the point reached
+		{
+			CurrentPatrolIndex++;
+
+			// If AI has reached the last point, reset or loop the index
+			if (CurrentPatrolIndex >= SplinePath->GetNumberOfSplinePoints())
+			{
+				CurrentPatrolIndex = 0; // Or handle differently if you want to stop the patrol or loop
+			}
 		}
 	}
-}
-
-void AGOClownAIController::MoveToLocationSmoothly(const FVector& TargetLocation)
-{
-	//// Early exit if no patrol point is set
-	//if (PatrolPoint.IsZero())
-	//{
-	//	return;
-	//}
-
-	//FVector CurrentLocation = GetPawn()->GetActorLocation();
-	//FRotator CurrentRotation = GetPawn()->GetActorRotation();
-
-	//// Calculate the direction to the patrol point
-	//FVector DirectionToTarget = TargetLocation - CurrentLocation;
-	//DirectionToTarget.Z = 0; // Ignore Z (vertical) component
-
-	//// Calculate target rotation
-	//FRotator TargetRotation = DirectionToTarget.Rotation();
-
-	//// Interpolate rotation smoothly with Slerp
-	//FQuat CurrentQuat = FQuat(CurrentRotation);
-	//FQuat TargetQuat = FQuat(TargetRotation);
-
-	//// Perform slerp to smoothly rotate towards target rotation
-	//FQuat SmoothedRotation = FQuat::Slerp(CurrentQuat, TargetQuat, RotationSpeed * GetWorld()->GetDeltaSeconds());
-
-	//// Apply the smoothed rotation
-	//GetPawn()->SetActorRotation(SmoothedRotation);
-
-	//// Calculate the distance and yaw difference between current and target rotation
-	//float YawDifference = FMath::Abs(CurrentRotation.Yaw - TargetRotation.Yaw);
-
-	//// Ensure yaw difference is within 180 degrees for smooth turning
-	//if (YawDifference > 180.0f)
-	//{
-	//	YawDifference = 360.0f - YawDifference;
-	//}
-
-	//// If sufficiently close to the target location and facing the target rotation, start moving
-	//if (YawDifference < 5.0f)
-	//{
-	//	DrawDebugSphere(GetWorld(), PatrolPoint, 10.0f, 10, FColor::Blue, false, 10.0f);
-	//	MoveToLocation(TargetLocation); // This triggers the AI to move towards the target location
-	//}
 }
 
 void AGOClownAIController::IncraseMaxPatrolAngle()

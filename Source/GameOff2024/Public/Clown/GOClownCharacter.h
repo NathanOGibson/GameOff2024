@@ -36,6 +36,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Clown Behavior")
 	void JumpscarePlayer();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "ClownState")
+	void DelayEvent();
+
+	UFUNCTION(BlueprintCallable, Category = "ClownState")
+	void IdleDelay();
+
 private:
 	AGOClownAIController* ClownAIController;
 
