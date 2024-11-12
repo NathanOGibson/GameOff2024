@@ -255,8 +255,7 @@ void AGOPropController::SetPropLocations()
 		// Place the chosen prop at the valid or fallback location
 		if (SelectedLocation)
 		{
-			ChosenProps[i]->SetActorLocation(SelectedLocation->GetComponentLocation());
-			ChosenProps[i]->SetActorRotation(SelectedLocation->GetComponentRotation());
+			SetPropLocationAndRotation(ChosenProps[i], SelectedLocation->GetComponentLocation(), SelectedLocation->GetComponentRotation());
 			UsedLocations.Add(SelectedLocation);
 			ChildrenSpawnLocations.Remove(SelectedLocation);
 		}
@@ -300,29 +299,26 @@ void AGOPropController::SetPropLocations()
 			TObjectPtr<AGOProp> Prop = ExtraProps[RandomIndex];
 
 			// Place the prop at the selected spawn location
-			Prop->SetActorLocation(Child->GetComponentLocation());
-			Prop->SetActorRotation(Child->GetComponentRotation());
+			SetPropLocationAndRotation(Prop, Child->GetComponentLocation(), Child->GetComponentRotation());
 
 			// Remove the selected prop from the extra props list
 			ExtraProps.RemoveAt(RandomIndex);
 		}
 	}
 }
-void AGOPropController::ResetPropLocation(AGOProp* Prop)
+void AGOPropController::SetPropLocationAndRotation(AGOProp* Prop, FVector ActorLocation, FRotator ActorRotation)
 {
 	if (!Prop) return;
 
-	// Set the prop's location to the controller's location
-	Prop->SetActorLocation(GetActorLocation());
-
-	// Set the prop's rotation to a default (zeroed) rotation
-	Prop->SetActorRotation(FRotator(0.f, 0.f, 0.f));
+	// Set the StoredProp location and rotation to the PropToStore's
+	Prop->SetActorLocation(ActorLocation);
+	Prop->SetActorRotation(ActorRotation);
 }
-
-void AGOPropController::Tick(float DeltaTime)
+void AGOPropController::ResetPropLocation(AGOProp* Prop)
 {
-	Super::Tick(DeltaTime);
-
+	// Set the prop's location to the controller's location
+	// Set the prop's rotation to a default (zeroed) rotation
+	SetPropLocationAndRotation(Prop, GetActorLocation(), FRotator(0.f, 0.f, 0.f));
 }
 
 void AGOPropController::StoreInteractedProp(AGOProp* PropToStore)
@@ -339,18 +335,8 @@ void AGOPropController::SwapInteractedProps(AGOProp* StoredProp, AGOProp* PropTo
 	FRotator ToStoreRotation = PropToStore->GetActorRotation();
 
 	// Set the StoredProp location and rotation to the PropToStore's
-	StoredProp->SetActorLocation(ToStoreLocation);
-	StoredProp->SetActorRotation(ToStoreRotation);
+	SetPropLocationAndRotation(StoredProp, ToStoreLocation, ToStoreRotation);
 
 	// Set the PropToStore location and rotation to off screen
 	ResetPropLocation(PropToStore);
-}
-
-void AGOPropController::DropStoredProp(AGOProp* StoredProp, FVector ActorLocation, FRotator ActorRotation)
-{
-	if (!StoredProp) return;
-
-	// Set the StoredProp location and rotation to the PropToStore's
-	StoredProp->SetActorLocation(ActorLocation);
-	StoredProp->SetActorRotation(ActorRotation);
 }

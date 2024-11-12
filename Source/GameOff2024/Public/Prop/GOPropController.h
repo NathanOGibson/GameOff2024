@@ -31,9 +31,7 @@ protected:
 private:
 	TObjectPtr<USceneComponent> ControllerSceneComponent;
 
-	UPROPERTY(EditAnywhere, Category = "Prop")
 	int32 PropsToSpawn = 6;
-	UPROPERTY(EditAnywhere, Category = "Prop")
 	int32 PropsToChoose = 1;
 
 	int32 PropsSavedSpawnCount;
@@ -65,13 +63,12 @@ private:
 
 	void SetPropLocations();
 
+
 	void ResetPropLocation(AGOProp* Prop);
 
 
 
 public:
-	virtual void Tick(float DeltaTime) override;
-
 	UFUNCTION(BlueprintCallable, Category = "PropController")
 	void StoreInteractedProp(AGOProp* PropToStore);
 
@@ -79,5 +76,8 @@ public:
 	void SwapInteractedProps(AGOProp* StoredProp, AGOProp* PropToStore);
 
 	UFUNCTION(BlueprintCallable, Category = "PropController")
-	void DropStoredProp(AGOProp* StoredProp, FVector ActorLocation, FRotator ActorRotation);
+	void SetPropLocationAndRotation(AGOProp* Prop, FVector ActorLocation, FRotator ActorRotation);
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	FORCEINLINE void SetPropsToChooseAndSpawn(int32 NewPropsToChoose, int32 NewPropsToSpawn) { PropsToChoose = NewPropsToChoose; PropsToSpawn = NewPropsToSpawn; }
 };
