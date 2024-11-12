@@ -26,18 +26,16 @@ void AGOPropController::ResetAndInitialiseProps()
 	ResetPropLocations();
 }
 
-void AGOPropController::SetupPropsAndSpawns(AGOProp*& ChosenTargetProp, AGOProp*& FirstBackupProp, AGOProp*& SecondBackupProp)
+void AGOPropController::SetupPropsAndSpawns(TArray<AGOProp*>& ChosenTargetProps)
 {
 	// Reset the number of props to spawn
 	PropsToSpawn = PropsSavedSpawnCount;
 
-	SelectPrimaryAndBackupProps();
+	SelectChoseProps();
 	InitialiseSpawnLocations();
 	SetPropLocations();
 
-	ChosenTargetProp = ChosenProp;
-	FirstBackupProp = BackupProps[0];
-	SecondBackupProp = BackupProps[1];
+	ChosenTargetProps = ChosenProps;
 }
 
 void AGOPropController::ClearAndResetProps()
@@ -71,29 +69,43 @@ TObjectPtr<AGOProp> AGOPropController::PickProp()
 	return AllProps[RandomIndex];
 }
 
-// Will be called on the Booth Entity
-void AGOPropController::SelectPrimaryAndBackupProps()
+void AGOPropController::SelectChoseProps()
 {
-	// Pick the main chosen prop
-	ChosenProp = PickProp();
+	ChosenProps.Empty();
 
-	// Loop until two unique extra props are selected
-	while (BackupProps.Num() < 2)
+	// Ensure we have enough props to choose from
+	if (AllProps.Num() < PropsToChoose)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Not enough unique props to fill the ChosenProps list!"));
+	}
+
+	// Pick unique props up to the desired number
+	while (ChosenProps.Num() < PropsToChoose && ChosenProps.Num() < AllProps.Num())
 	{
 		AGOProp* Prop = PickProp();
 
-		// Add the prop to ExtraProps if it's not already there and isn't the chosen prop
-		if (!BackupProps.Contains(Prop) && Prop != ChosenProp) BackupProps.Add(Prop);
+		// Check for null and ensure the prop isn't already chosen
+		if (Prop && !ChosenProps.Contains(Prop))
+		{
+			ChosenProps.Add(Prop);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Duplicate or invalid prop encountered!"));
+		}
+	}
+
+	// Log if we didn't fill up the list
+	if (ChosenProps.Num() < PropsToChoose)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Only %d props could be selected, but %d were required."), ChosenProps.Num(), PropsToChoose);
 	}
 }
 
 void AGOPropController::ClearPropData()
 {
-	// Clear the prop lists
-	BackupProps.Empty();      // Clears the array of extra props
-
-	// Reset the chosen prop
-	ChosenProp = nullptr;    // Resets the pointer to the chosen prop to null
+	// Reset the chosen prop list
+	ChosenProps.Empty();    // Resets the pointer to the chosen prop to null
 
 	// Clear spawn locations if needed
 	ChildrenSpawnLocations.Empty(); // Clears the spawn locations array if you want to reset that too
@@ -108,14 +120,7 @@ void AGOPropController::ResetPropLocations()
 	// Loop through all props and reset their location and rotation
 	for (AGOProp* Prop : AllProps)
 	{
-		if (Prop)
-		{
-			// Set the prop's location to the controller's location
-			Prop->SetActorLocation(GetActorLocation());
-
-			// Set the prop's rotation to a default (zeroed) rotation
-			Prop->SetActorRotation(FRotator(0.f, 0.f, 0.f));
-		}
+		ResetPropLocation(Prop);
 	}
 }
 
@@ -204,106 +209,114 @@ USceneComponent* AGOPropController::GetFurthestSpawnPoint(TArray<USceneComponent
 
 void AGOPropController::SetPropLocations()
 {
-	// Define a minimum distance that extra props should maintain between each other
-	const float MinDistanceBetweenExtraProps = 2000.f;
+	// Define a minimum distance that props should maintain between each other
+	const float MinDistanceBetweenProps = 2000.f;
 
-	// Start by adding the two extra props to the placement list
-	TArray<TObjectPtr<AGOProp>> PlacementProps;
-	PlacementProps.Add(BackupProps[0]);
-	PlacementProps.Add(BackupProps[1]);
+	// Track which locations have been used
+	TArray<USceneComponent*> UsedLocations;
 
-	// Pick random locations for extra props ensuring they are far apart
-	USceneComponent* FirstExtraPropLocation = nullptr;
-
-	// Randomly select a spawn location for the first extra prop
-	int32 RandomExtraIndex = FMath::RandRange(0, ChildrenSpawnLocations.Num() - 1);
-	FirstExtraPropLocation = ChildrenSpawnLocations[RandomExtraIndex];
-
-	// Place the first extra prop at the selected location
-	PlacementProps[0]->SetActorLocation(FirstExtraPropLocation->GetComponentLocation());
-	PlacementProps[0]->SetActorRotation(FirstExtraPropLocation->GetComponentRotation());
-	ChildrenSpawnLocations.RemoveAt(RandomExtraIndex);
-
-	// Find a location for the second extra prop that is far enough from the first
-	USceneComponent* SecondExtraPropLocation = nullptr;
-	for (USceneComponent* PotentialLocation : ChildrenSpawnLocations)
+	// Randomly place chosen props while ensuring they are far apart
+	for (int32 i = 0; i < ChosenProps.Num(); i++)
 	{
-		float Distance = FVector::Dist(FirstExtraPropLocation->GetComponentLocation(), PotentialLocation->GetComponentLocation());
+		USceneComponent* SelectedLocation = nullptr;
 
-		// Ensure the distance between the two locations is greater than the defined minimum
-		if (Distance > MinDistanceBetweenExtraProps)
+		// Find a valid location for the current chosen prop
+		for (USceneComponent* PotentialLocation : ChildrenSpawnLocations)
 		{
-			SecondExtraPropLocation = PotentialLocation;
-			break;
+			bool bIsLocationValid = true;
+
+			// Ensure the location is far enough from already placed props
+			for (USceneComponent* UsedLocation : UsedLocations)
+			{
+				float Distance = FVector::Dist(PotentialLocation->GetComponentLocation(), UsedLocation->GetComponentLocation());
+
+				if (Distance < MinDistanceBetweenProps)
+				{
+					bIsLocationValid = false;
+					break;
+				}
+			}
+
+			if (bIsLocationValid)
+			{
+				SelectedLocation = PotentialLocation;
+				break;
+			}
+		}
+
+		// If no valid location is found, fallback to a random remaining location
+		if (!SelectedLocation && ChildrenSpawnLocations.Num() > 0)
+		{
+			int32 RandomIndex = FMath::RandRange(0, ChildrenSpawnLocations.Num() - 1);
+			SelectedLocation = ChildrenSpawnLocations[RandomIndex];
+			ChildrenSpawnLocations.RemoveAt(RandomIndex);
+		}
+
+		// Place the chosen prop at the valid or fallback location
+		if (SelectedLocation)
+		{
+			ChosenProps[i]->SetActorLocation(SelectedLocation->GetComponentLocation());
+			ChosenProps[i]->SetActorRotation(SelectedLocation->GetComponentRotation());
+			UsedLocations.Add(SelectedLocation);
+			ChildrenSpawnLocations.Remove(SelectedLocation);
 		}
 	}
 
-	// If a valid second location is found, place the second extra prop there
-	if (SecondExtraPropLocation)
-	{
-		//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("LargeDist")));
-		PlacementProps[1]->SetActorLocation(SecondExtraPropLocation->GetComponentLocation());
-		PlacementProps[1]->SetActorRotation(SecondExtraPropLocation->GetComponentRotation());
-		ChildrenSpawnLocations.Remove(SecondExtraPropLocation);
-	}
-	else
-	{
-		//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Rand")));
-		// If no valid far location is found, fallback to a random remaining location
-		int32 FallbackIndex = FMath::RandRange(0, ChildrenSpawnLocations.Num() - 1);
-		USceneComponent* FallbackLocation = ChildrenSpawnLocations[FallbackIndex];
-		PlacementProps[1]->SetActorLocation(FallbackLocation->GetComponentLocation());
-		PlacementProps[1]->SetActorRotation(FallbackLocation->GetComponentRotation());
-		ChildrenSpawnLocations.RemoveAt(FallbackIndex);
-	}
-
-	// Remove the first two extra props from PlacementProps to prevent further reuse
-	PlacementProps.RemoveAt(0, 2);
+	// Adjust PropsToSpawn to exclude ChosenProps
+	int32 RemainingPropsToSpawn;
 
 	// Catch for if the spawn number is more than the total props
 	if (PropsToSpawn >= AllProps.Num())
 	{
-		PropsToSpawn = AllProps.Num() - 3;
+		RemainingPropsToSpawn = AllProps.Num() - ChosenProps.Num();
 	}
 	else
 	{
-		PropsToSpawn -= 2;
+		RemainingPropsToSpawn = PropsToSpawn - ChosenProps.Num();
 	}
 
-	// Now, fill the remaining slots with other unique props
-	while (PlacementProps.Num() < PropsToSpawn)
+	// Handle remaining props to fill the available slots
+	TArray<TObjectPtr<AGOProp>> ExtraProps;
+	while (ExtraProps.Num() < RemainingPropsToSpawn)
 	{
 		AGOProp* Prop = PickProp();
 
-		// Ensure that the prop is not already chosen, not extra, and not in PlacementProps
-		if (!BackupProps.Contains(Prop) && Prop != ChosenProp && !PlacementProps.Contains(Prop))
+		// Ensure the prop is not already in the chosen or extra props
+		if (!ChosenProps.Contains(Prop) && !ExtraProps.Contains(Prop))
 		{
-			//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Prop: %s"), *Prop->GetName()));
-			PlacementProps.Add(Prop);
+			ExtraProps.Add(Prop);
 		}
 	}
 
-	// Place remaining props at available spawn locations
+	// Place extra props at available spawn locations
 	for (int32 i = 0; i < ChildrenSpawnLocations.Num(); i++)
 	{
-		if (PlacementProps.Num() > 0)
+		if (ExtraProps.Num() > 0)
 		{
 			USceneComponent* Child = ChildrenSpawnLocations[i];
 
-			// Pick a random prop from the placement props array
-			int32 RandomIndex = FMath::RandRange(0, PlacementProps.Num() - 1);
-			TObjectPtr<AGOProp> Prop = PlacementProps[RandomIndex];
-
-			//GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("Prop: %s"), *Prop->GetName()));
+			// Pick a random prop from the extra props array
+			int32 RandomIndex = FMath::RandRange(0, ExtraProps.Num() - 1);
+			TObjectPtr<AGOProp> Prop = ExtraProps[RandomIndex];
 
 			// Place the prop at the selected spawn location
 			Prop->SetActorLocation(Child->GetComponentLocation());
 			Prop->SetActorRotation(Child->GetComponentRotation());
 
-			// Remove the selected prop from the placement list
-			PlacementProps.RemoveAt(RandomIndex);
+			// Remove the selected prop from the extra props list
+			ExtraProps.RemoveAt(RandomIndex);
 		}
 	}
+}
+void AGOPropController::ResetPropLocation(AGOProp* Prop)
+{
+	if (!Prop) return;
+
+	// Set the prop's location to the controller's location
+	Prop->SetActorLocation(GetActorLocation());
+
+	// Set the prop's rotation to a default (zeroed) rotation
+	Prop->SetActorRotation(FRotator(0.f, 0.f, 0.f));
 }
 
 void AGOPropController::Tick(float DeltaTime)
@@ -312,3 +325,32 @@ void AGOPropController::Tick(float DeltaTime)
 
 }
 
+void AGOPropController::StoreInteractedProp(AGOProp* PropToStore)
+{
+	ResetPropLocation(PropToStore);
+}
+
+void AGOPropController::SwapInteractedProps(AGOProp* StoredProp, AGOProp* PropToStore)
+{
+	if (!PropToStore && !StoredProp) return;
+
+	// Set the PropToStore location and rotation to the stored prop's
+	FVector ToStoreLocation = PropToStore->GetActorLocation();
+	FRotator ToStoreRotation = PropToStore->GetActorRotation();
+
+	// Set the StoredProp location and rotation to the PropToStore's
+	StoredProp->SetActorLocation(ToStoreLocation);
+	StoredProp->SetActorRotation(ToStoreRotation);
+
+	// Set the PropToStore location and rotation to off screen
+	ResetPropLocation(PropToStore);
+}
+
+void AGOPropController::DropStoredProp(AGOProp* StoredProp, FVector ActorLocation, FRotator ActorRotation)
+{
+	if (!StoredProp) return;
+
+	// Set the StoredProp location and rotation to the PropToStore's
+	StoredProp->SetActorLocation(ActorLocation);
+	StoredProp->SetActorRotation(ActorRotation);
+}

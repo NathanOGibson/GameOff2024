@@ -26,10 +26,14 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Prop")
 	TObjectPtr<UStaticMeshComponent> PropMesh;
 
+	UPROPERTY(VisibleAnywhere, Category = "Prop")
+	bool bIsPickedUp = false;
+
 
 
 public:
 	virtual void Tick(float DeltaTime) override;
 
 	FORCEINLINE FString GetPropName() const { return PropName; }
+	FORCEINLINE bool GetIsPickedUp() const { return bIsPickedUp; }
 };

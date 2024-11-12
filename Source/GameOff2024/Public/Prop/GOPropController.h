@@ -23,7 +23,7 @@ protected:
 	void ResetAndInitialiseProps();
 
 	UFUNCTION(BlueprintCallable, Category = "PropController")
-	void SetupPropsAndSpawns(AGOProp*& ChosenTargetProp, AGOProp*& FirstBackupProp, AGOProp*& SecondBackupProp);
+	void SetupPropsAndSpawns(TArray<AGOProp*>& ChosenTargetProps);
 
 	UFUNCTION(BlueprintCallable, Category = "PropController")
 	void ClearAndResetProps();
@@ -33,6 +33,8 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Prop")
 	int32 PropsToSpawn = 6;
+	UPROPERTY(EditAnywhere, Category = "Prop")
+	int32 PropsToChoose = 1;
 
 	int32 PropsSavedSpawnCount;
 
@@ -40,10 +42,7 @@ private:
 	TArray<TObjectPtr<AGOProp>> AllProps;
 
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
-	TObjectPtr<AGOProp> ChosenProp;
-
-	UPROPERTY(VisibleAnywhere, Category = "Prop")
-	TArray<TObjectPtr<AGOProp>> BackupProps;
+	TArray<TObjectPtr<AGOProp>> ChosenProps;
 
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
 	TArray<USceneComponent*> ChildrenSpawnLocations;
@@ -53,7 +52,7 @@ private:
 
 	TObjectPtr<AGOProp> PickProp();
 
-	void SelectPrimaryAndBackupProps();
+	void SelectChoseProps();
 
 	void ClearPropData();
 
@@ -66,8 +65,19 @@ private:
 
 	void SetPropLocations();
 
+	void ResetPropLocation(AGOProp* Prop);
+
+
 
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	void StoreInteractedProp(AGOProp* PropToStore);
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	void SwapInteractedProps(AGOProp* StoredProp, AGOProp* PropToStore);
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	void DropStoredProp(AGOProp* StoredProp, FVector ActorLocation, FRotator ActorRotation);
 };
