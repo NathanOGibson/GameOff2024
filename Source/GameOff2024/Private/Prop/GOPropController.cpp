@@ -314,6 +314,31 @@ void AGOPropController::SetPropLocationAndRotation(AGOProp* Prop, FVector ActorL
 	Prop->SetActorLocation(ActorLocation);
 	Prop->SetActorRotation(ActorRotation);
 }
+bool AGOPropController::IsCorrectProp(AGOProp* Prop, int32 BillboardIndex)
+{
+	if (!ChosenProps.Contains(Prop)) return false;
+	if (ChosenProps.Num() < BillboardIndex + 1) return false;
+	if (ChosenProps[BillboardIndex] == Prop) return true;
+	return false;
+}
+void AGOPropController::AddToInaccessibleProps(AGOProp* Prop)
+{
+	InaccessibleProps.AddUnique(Prop);
+	Prop->SetPropCanBePickedUp(false);
+}
+void AGOPropController::ResetInaccessibleProps()
+{
+	for (AGOProp* Prop : InaccessibleProps)
+	{
+		Prop->SetPropCanBePickedUp(true);
+	}
+	InaccessibleProps.Empty();
+}
+bool AGOPropController::PropsCollected()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("IAProps: %d, PropToChoose: %d"), InaccessibleProps.Num(), PropsToChoose));
+	return InaccessibleProps.Num() == PropsToChoose;
+}
 void AGOPropController::ResetPropLocation(AGOProp* Prop)
 {
 	// Set the prop's location to the controller's location

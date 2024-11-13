@@ -43,6 +43,9 @@ private:
 	TArray<TObjectPtr<AGOProp>> ChosenProps;
 
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
+	TArray<TObjectPtr<AGOProp>> InaccessibleProps;
+
+	UPROPERTY(VisibleAnywhere, Category = "Prop")
 	TArray<USceneComponent*> ChildrenSpawnLocations;
 
 	/** Assigning Props*/
@@ -80,4 +83,17 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PropController")
 	FORCEINLINE void SetPropsToChooseAndSpawn(int32 NewPropsToChoose, int32 NewPropsToSpawn) { PropsToChoose = NewPropsToChoose; PropsToSpawn = NewPropsToSpawn; }
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	FORCEINLINE bool IsCorrectProp(AGOProp* Prop, int32 BillboardIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	void AddToInaccessibleProps(AGOProp* Prop);
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	void ResetInaccessibleProps();
+
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	bool PropsCollected();
+
 };

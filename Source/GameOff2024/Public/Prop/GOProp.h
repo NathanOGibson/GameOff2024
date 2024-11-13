@@ -22,6 +22,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Prop")
 	TObjectPtr<UTexture2D> PropImage;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Prop")
+	bool PropCanBePickedUp = true;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -37,4 +40,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	FORCEINLINE FString GetPropName() const { return PropName; }
+
+	UFUNCTION(BlueprintCallable, Category = "Prop")
+	FORCEINLINE bool GetPropCanBePickedUp() const { return PropCanBePickedUp; }
+
+	UFUNCTION(BlueprintCallable, Category = "Prop")
+	FORCEINLINE void  SetPropCanBePickedUp(bool CanBePickedUp) { PropCanBePickedUp = CanBePickedUp; }
 };
