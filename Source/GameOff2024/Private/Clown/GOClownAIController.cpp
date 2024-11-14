@@ -38,9 +38,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 	// Get the forward vector of the character (direction it's facing)
 	FVector ForwardVector = CurrentRotation.Vector();
 
-	// Random distance (e.g., 300 units) to search for a patrol point in front of the character
-	float PatrolDistance = 700.0f;
-
 	// Find a random offset within the specified angle
 	float RandomAngle = FMath::RandRange(-MaxPatrolAngle, MaxPatrolAngle);
 	FRotator RandomRotation = FRotator(0, RandomAngle, 0); // Random Yaw Rotation based on angle
@@ -132,6 +129,7 @@ void AGOClownAIController::MoveToPatrolPoint()
 void AGOClownAIController::IncraseMaxPatrolAngle()
 {
 	MaxPatrolAngle += 10.f;
+	if (PatrolDistance > 400.f) PatrolDistance -= 100.f;
 }
 
 bool AGOClownAIController::HasReachedPatrolPoint(float ReachThreshold)
@@ -139,23 +137,74 @@ bool AGOClownAIController::HasReachedPatrolPoint(float ReachThreshold)
 	FVector CurrentLocation = GetPawn()->GetActorLocation();
 	float DistanceToPatrolPoint = FVector::Dist(CurrentLocation, PatrolPoint);
 
-	//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, FString::Printf(TEXT("Distance to patrol point: %f"), DistanceToPatrolPoint));
-
 	// Check if the distance is within a defined threshold
 	return DistanceToPatrolPoint <= ReachThreshold;
+}
+
+bool AGOClownAIController::HasReachedSearchPoint(float ReachThreshold)
+{
+	FVector CurrentLocation = GetPawn()->GetActorLocation();
+	float DistanceToSearchPoint = FVector::Dist(CurrentLocation, SearchPoint);
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, FString::Printf(TEXT("Distance to search point: %f"), DistanceToSearchPoint));
+
+	// Check if the distance is within a defined threshold
+	return DistanceToSearchPoint <= ReachThreshold;
 }
 
 void AGOClownAIController::ChasePlayer()
 {
 	AActor* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	if (Player)
-	{
-		MoveToLocation(Player->GetActorLocation()); // This triggers the AI to move towards the target location
-		//MoveToLocationSmoothly(Player->GetActorLocation());
-	}
+	if (!Player) return;
+
+	// Get the direction from the AI to the player
+	FVector DirectionToPlayer = (Player->GetActorLocation() - GetPawn()->GetActorLocation()).GetSafeNormal();
+
+	// Calculate the desired rotation to face the player
+	FRotator TargetRotation = DirectionToPlayer.Rotation();
+
+	// Get the current rotation of the AI pawn
+	FRotator CurrentRotation = GetPawn()->GetActorRotation();
+
+	// Interpolate the AI's rotation smoothly towards the target rotation
+	FRotator SmoothedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), RotationSpeed);
+
+	// Apply the smoothed rotation
+	GetPawn()->SetActorRotation(SmoothedRotation);
+
+	// Move the AI toward the player's location
+	MoveToLocation(Player->GetActorLocation());
 }
 
-void AGOClownAIController::SearchForPlayer()
+FVector AGOClownAIController::GetSearchPoint()
 {
-	// Simple search routine (e.g., move to last known player position, wait, and search)
+	AActor* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!Player) return FVector::ZeroVector;
+
+	SearchPoint = Player->GetActorLocation();
+	return SearchPoint;
+}
+
+void AGOClownAIController::MoveToSearchPoint()
+{
+	if (SearchPoint.IsZero()) return;
+
+	// Get the direction from the AI to the search point
+	FVector DirectionToPlayer = (SearchPoint - GetPawn()->GetActorLocation()).GetSafeNormal();
+
+	// Calculate the desired rotation to face the player
+	FRotator TargetRotation = DirectionToPlayer.Rotation();
+
+	// Get the current rotation of the AI pawn
+	FRotator CurrentRotation = GetPawn()->GetActorRotation();
+
+	// Interpolate the AI's rotation smoothly towards the target rotation
+	FRotator SmoothedRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), RotationSpeed);
+
+	// Apply the smoothed rotation
+	GetPawn()->SetActorRotation(SmoothedRotation);
+
+	// Move the AI toward the player's location
+	DrawDebugSphere(GetWorld(), SearchPoint, 50.f, 8.f, FColor::Red, false, 0.f);
+	MoveToLocation(SearchPoint);
 }

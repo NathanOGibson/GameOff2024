@@ -38,17 +38,23 @@ public:
 
 	void IncraseMaxPatrolAngle();
 
-	void ResetMaxPatrolAngle() { MaxPatrolAngle = 30.0f; }
+	void ResetMaxPatrolAngle() { MaxPatrolAngle = 30.0f;  PatrolDistance = CachedPatrolDistance; }
+
 
 	bool HasReachedPatrolPoint(float ReachThreshold);
+	bool HasReachedSearchPoint(float ReachThreshold);
 
 	// Function to control chasing the player
 	void ChasePlayer();
 
 	// Function to control searching behavior
-	void SearchForPlayer();
+	FVector GetSearchPoint();
+
+	void MoveToSearchPoint();
 
 private:
+	FVector SearchPoint;
+
 	float RotationSpeed = 6.f; // Speed of rotation interpolation
 
 	float MaxPatrolAngle = 30.0f;
@@ -56,4 +62,10 @@ private:
 	int32 CurrentPatrolIndex = 0;
 
 	TObjectPtr<USplineComponent> SplinePath;
+
+	float PatrolDistance = 1000.0f;
+	float CachedPatrolDistance;
+
+public:
+	FORCEINLINE void SetPatrolDistance(float NewPatrolDistance) { PatrolDistance = NewPatrolDistance; CachedPatrolDistance = NewPatrolDistance; }
 };
