@@ -86,11 +86,6 @@ void AGOClownCharacter::JumpscarePlayer()
 	}
 }
 
-void AGOClownCharacter::IdleDelay()
-{
-	ClownState = EClownState::ECS_GetPatrolPoint;
-}
-
 void AGOClownCharacter::SetCharacterSpeed(float Speed)
 {
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
@@ -105,7 +100,7 @@ void AGOClownCharacter::HandleIdleState()
 	// Do nothing
 
 	// Check if timer finished (GET PATROL POINT) IdleDelayAmount
-	DelayEvent(IdleDelayAmount);
+	IdleDelay(IdleDelayAmount);
 
 	// Check for player detection (CHASE)
 	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
@@ -119,7 +114,7 @@ void AGOClownCharacter::HandleGetPatrolPointState()
 
 	// Check Patrol point found (PATROL)
 	if (NewMovePoint != FVector::ZeroVector) ClownState = EClownState::ECS_Patrol;
-	ClownAIController->IncraseMaxPatrolAngle();
+	ClownAIController->AdjustPatrolSettings();
 
 	// Check for player detection (CHASE)
 	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
@@ -129,15 +124,14 @@ void AGOClownCharacter::HandlePatrolState()
 {
 	SetCharacterSpeed(PatrolMovementSpeed);
 
-	ClownAIController->ResetMaxPatrolAngle();
+	ClownAIController->ResetPatrolSettings();
 	// Move towards the patrol point
 	ClownAIController->MoveToPatrolPoint();
 
 	// Check if reached patrol point (IDLE)
 	if (ClownAIController->HasReachedPatrolPoint(100.f))
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Patrol point reached!"));
-		ClownState = EClownState::ECS_Idle;
+		PatrolDelay(PatrolDelayAmount);
 	}
 
 	// Check for player detection (CHASE)
@@ -152,7 +146,10 @@ void AGOClownCharacter::HandleChaseState()
 	ClownAIController->ChasePlayer();
 
 	// Check if player outside player detection range (SEARCH)
-	if (!CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_GetSearchPoint;
+	if (!CheckPlayerWithinDetectionRange())
+	{
+		ChaseDelay(ChaseDelayAmount);
+	}
 	// Check if player inside jumpscare range (JUMPSCARE)
 }
 
@@ -176,9 +173,9 @@ void AGOClownCharacter::HandleSearchState()
 	// Check if timer finished (IDLE) SearchDelayAmount
 	if (ClownAIController->HasReachedSearchPoint(100.f))
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Patrol point reached!"));
-		DelayEvent(SearchDelayAmount);
+		SearchDelay(SearchDelayAmount);
 	}
+
 	// Check for player detection (CHASE)
 	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
 }
@@ -195,7 +192,7 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 	if (!Player || !ClownAIController) return false;
 
 	// Check if the player is within the detection range
-	if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= DetectionRange)
+	if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= DetectionQueryRange)
 	{
 		// Get direction from clown to player
 		FVector DirectionToPlayer = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
@@ -217,8 +214,107 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 		FVector LeftDetectionLine = ClownForward.RotateAngleAxis(-HalfDetectionAngle, FVector::UpVector);
 
 		// Draw debug lines to visualize detection cone
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + RightDetectionLine * DetectionRange, FColor::Green, false, 1.0f, 0, 2.0f);
-		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + LeftDetectionLine * DetectionRange, FColor::Green, false, 1.0f, 0, 2.0f);
+		//DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + RightDetectionLine * DetectionRange, FColor::Green, false, 1.0f, 0, 2.0f);
+		//DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + LeftDetectionLine * DetectionRange, FColor::Green, false, 1.0f, 0, 2.0f);
+
+		// Check if player is within the detection angle (e.g., 45 degrees)
+		if (AngleDegrees <= HalfDetectionAngle)
+		{
+			if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= DetectionAgroRange)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("AGRO"));
+				ClownDetection = DetectionThreshold;
+				return true;
+			}
+
+			// Perform a line trace (raycast) to check for obstacles between the clown and the player
+			FHitResult HitResult;
+			FVector StartLocation = GetActorLocation();
+			FVector EndLocation = Player->GetActorLocation();
+			EndLocation.Z = StartLocation.Z;
+			FCollisionQueryParams CollisionParams;
+			CollisionParams.AddIgnoredActor(this);  // Ignore the clown itself in the line trace
+
+			// Draw a debug line for the line trace
+			//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 1.0f, 0, 2.0f);
+
+			// Line trace to check if anything blocks the line of sight
+			bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, CollisionParams);
+
+			// Check if the hit actor is the player
+			if (bHit && HitResult.GetActor() == Player)
+			{
+				// Increase ClownDetection based on the player's movement state
+				float DetectionIncreaseAmount;
+
+				if (!CheckPlayerIsMoving())
+				{
+					DetectionIncreaseAmount = ClownDetection += DetectionNotWalkingIncreaseRate;
+				}
+				else if (CheckPlayerIsCrouching())
+				{
+					DetectionIncreaseAmount = ClownDetection += DetectionCrouchingIncreaseRate;
+				}
+				else if (CheckPlayerIsSprinting())
+				{
+					DetectionIncreaseAmount = ClownDetection += DetectionSprintingIncreaseRate;
+				}
+				else  // Walking
+				{
+					DetectionIncreaseAmount = ClownDetection += DetectionWalkingIncreaseRate;
+				}
+
+				ClownDetection = FMath::Clamp(DetectionIncreaseAmount, 0.0f, DetectionThreshold);
+
+
+
+				// Check if ClownDetection reaches the threshold to switch to chase
+				if (ClownDetection >= DetectionThreshold)
+				{
+					// Switch to chase state (you can replace this with actual chase state logic)
+					return true;  // Player is within detection range and line of sight
+				}
+
+			}
+		}
+	}
+
+	// Reset ClownDetection if the player is no longer within range or line of sight
+	ClownDetection = FMath::Max(ClownDetection - DetectionDecayRate, 0.0f);  // Slowly decay detection
+
+	return false;
+}
+
+
+
+void AGOClownCharacter::TempFunc()
+{
+
+	// Check if the player is within the detection range
+	if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= DetectionQueryRange)
+	{
+		// Get direction from clown to player
+		FVector DirectionToPlayer = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+
+		// Get clown's forward vector
+		FVector ClownForward = GetActorForwardVector().GetSafeNormal();
+
+		// Calculate the dot product between forward vector and direction to player
+		float DotProduct = FVector::DotProduct(ClownForward, DirectionToPlayer);
+
+		// Calculate the angle from the dot product
+		float AngleDegrees = FMath::Acos(DotProduct) * (180.0f / PI);
+
+		// Define the detection angle (in degrees)
+		float HalfDetectionAngle = DetectionAngle / 2.0f;
+
+		// Debug: Draw detection angle lines
+		FVector RightDetectionLine = ClownForward.RotateAngleAxis(HalfDetectionAngle, FVector::UpVector);
+		FVector LeftDetectionLine = ClownForward.RotateAngleAxis(-HalfDetectionAngle, FVector::UpVector);
+
+		// Draw debug lines to visualize detection cone
+		//DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + RightDetectionLine * DetectionRange, FColor::Green, false, 1.0f, 0, 2.0f);
+		//DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + LeftDetectionLine * DetectionRange, FColor::Green, false, 1.0f, 0, 2.0f);
 
 		// Check if player is within the detection angle (e.g., 45 degrees)
 		if (AngleDegrees <= HalfDetectionAngle)
@@ -227,6 +323,7 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 			FHitResult HitResult;
 			FVector StartLocation = GetActorLocation();
 			FVector EndLocation = Player->GetActorLocation();
+			EndLocation.Z = StartLocation.Z;
 			FCollisionQueryParams CollisionParams;
 			CollisionParams.AddIgnoredActor(this);  // Ignore the clown itself in the line trace
 
@@ -246,7 +343,6 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 				if (HitResult.GetActor() == Player)
 				{
 					//GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, TEXT("Player is in sight!"));
-					return true;
 				}
 			}
 			else
@@ -255,5 +351,4 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 			}
 		}
 	}
-	return false;
 }

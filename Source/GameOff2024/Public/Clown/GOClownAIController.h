@@ -27,44 +27,45 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	// Function to control patrolling
+	/** Patrol functions */
 	FVector GetPatrolPoint();
-
 	void MoveToPatrolPoint();
-
-
-	FVector FirstPathPoint;
-	FVector PatrolPoint;
-
-	void IncraseMaxPatrolAngle();
-
-	void ResetMaxPatrolAngle() { MaxPatrolAngle = 30.0f;  PatrolDistance = CachedPatrolDistance; }
-
-
+	void AdjustPatrolSettings();
+	void ResetPatrolSettings() { MaxPatrolAngle = 30.0f;  PatrolDistance = CachedPatrolDistance; }
 	bool HasReachedPatrolPoint(float ReachThreshold);
-	bool HasReachedSearchPoint(float ReachThreshold);
 
-	// Function to control chasing the player
+	/** Chase functions */
 	void ChasePlayer();
 
-	// Function to control searching behavior
+	/** Search functions */
 	FVector GetSearchPoint();
-
 	void MoveToSearchPoint();
+	bool HasReachedSearchPoint(float ReachThreshold);
 
 private:
-	FVector SearchPoint;
+	/* Character current location and rotation variables **/
+	FVector CharacterLocation;
+	FRotator CharacterRotation;
 
-	float RotationSpeed = 6.f; // Speed of rotation interpolation
-
-	float MaxPatrolAngle = 30.0f;
-
-	int32 CurrentPatrolIndex = 0;
-
+	/** Spline variables */
+	int32 CurrentSplinePatrolIndex = 0;
 	TObjectPtr<USplineComponent> SplinePath;
 
+	/** Patrol variables */
+	FVector FirstPathPoint;
+	FVector PatrolPoint;
 	float PatrolDistance = 1000.0f;
 	float CachedPatrolDistance;
+	float MaxPatrolAngle = 30.0f;
+
+	/** Search variables */
+	FVector SearchPoint;
+
+	/** Movement variable */
+	float RotationSpeed = 4.f;
+
+	/** Player variable */
+	AActor* Player;
 
 public:
 	FORCEINLINE void SetPatrolDistance(float NewPatrolDistance) { PatrolDistance = NewPatrolDistance; CachedPatrolDistance = NewPatrolDistance; }
