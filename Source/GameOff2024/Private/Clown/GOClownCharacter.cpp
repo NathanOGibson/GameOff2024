@@ -126,12 +126,15 @@ void AGOClownCharacter::HandlePatrolState()
 
 	ClownAIController->ResetPatrolSettings();
 	// Move towards the patrol point
-	ClownAIController->MoveToPatrolPoint();
 
 	// Check if reached patrol point (IDLE)
 	if (ClownAIController->HasReachedPatrolPoint(100.f))
 	{
 		PatrolDelay(PatrolDelayAmount);
+	}
+	else
+	{
+		ClownAIController->MoveToPatrolPoint();
 	}
 
 	// Check for player detection (CHASE)
@@ -174,6 +177,10 @@ void AGOClownCharacter::HandleSearchState()
 	if (ClownAIController->HasReachedSearchPoint(100.f))
 	{
 		SearchDelay(SearchDelayAmount);
+	}
+	else
+	{
+		ClownAIController->MoveToSearchPoint();
 	}
 
 	// Check for player detection (CHASE)

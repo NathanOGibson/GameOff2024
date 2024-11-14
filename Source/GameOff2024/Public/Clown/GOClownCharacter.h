@@ -149,7 +149,6 @@ private:
 
 	//////////////////////
 
-
 	/** Idle state function */
 	void HandleIdleState();
 
