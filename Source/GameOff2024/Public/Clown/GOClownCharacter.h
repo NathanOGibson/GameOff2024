@@ -123,7 +123,20 @@ private:
 
 	void SetCharacterSpeed(float Speed);
 
-	//////////////////////
+	/////////////////////////////////////////////////////////////////////////
+
+	/* Detection Functions **/
+	bool CheckPlayerWithinDetectionRange();
+	void AdjustClownDetection(float DetectionAdjustmentAmount);
+	void DebugDetectionRange();
+	bool IsPlayerWithinDetectionRange(float DistanceToPlayer);
+	bool IsPlayerWithinDetectionAngle(FVector PlayerLocation);
+	bool IsPlayerWithinAgroRange(float DistanceToPlayer);
+	bool IsPlayerInLineOfSight(FVector PlayerLocation, FVector ClownLocation);
+	void AdjustClownDetectionBasedOnPlayerMovement();
+
+	/////////////////////////////////////////////////////////////////////////
+
 	void TempFunc();
 
 	UPROPERTY(VisibleAnywhere, Category = "Clown Detection")
@@ -145,6 +158,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Clown Detection")
 	float DetectionSprintingIncreaseRate = 4.f;
 
+	//////////////////////
 
 
 	//////////////////////
@@ -170,8 +184,6 @@ private:
 	/** Jumpscare state function */
 	void HandleJumpscareState();
 
-	/** Transition states */
-	bool CheckPlayerWithinDetectionRange();
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "ClownState")
