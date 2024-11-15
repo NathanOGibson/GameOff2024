@@ -34,6 +34,12 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	////////////////////////////////////////////////
+
+	void TODO_FUNCTIONS();
+
+	////////////////////////////////////////////////
+
 	/* Delay functions implemented in blueprints **/
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void IdleDelay(float DelayAmount);

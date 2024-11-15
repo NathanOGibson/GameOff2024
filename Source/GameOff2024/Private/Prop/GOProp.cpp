@@ -19,10 +19,3 @@ void AGOProp::BeginPlay()
 	Super::BeginPlay();
 
 }
-
-void AGOProp::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
