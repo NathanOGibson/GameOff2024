@@ -20,6 +20,11 @@ AGOBooth::AGOBooth()
 	BoothMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoothMesh"));
 	BoothMesh->SetupAttachment(RootComponent);
 
+	CreateSignMeshesAndBillboards();
+}
+
+void AGOBooth::CreateSignMeshesAndBillboards()
+{
 	// Create the sign meshes and billboards
 	for (int32 i = 0; i < 5; i++)
 	{
@@ -56,6 +61,5 @@ void AGOBooth::InitialiseReferences()
 void AGOBooth::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 

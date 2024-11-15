@@ -16,31 +16,33 @@ class GAMEOFF2024_API AGOBooth : public AActor
 public:
 	AGOBooth();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Booth")
+	/** PropController reference */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Prop Controller")
 	TObjectPtr<AGOPropController> PropController;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Booth")
+	/** Billboard array reference */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sign Billboards")
 	TArray<TObjectPtr<UBillboardComponent>> SignBillboards;
 
-	UFUNCTION(BlueprintCallable, Category = "Booth")
+	/** Initialise Prop Controller */
+	UFUNCTION(BlueprintCallable, Category = "Prop Controller")
 	void InitialiseReferences();
 
 protected:
 	virtual void BeginPlay() override;
 
-
 private:
+
+	/** Booth components */
 	TObjectPtr<USceneComponent> BoothSceneComponent;
-
-	UPROPERTY(EditAnywhere, Category = "Booth")
+	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> BoothMesh;
-
-	UPROPERTY(EditAnywhere, Category = "Booth")
+	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TArray<TObjectPtr<UStaticMeshComponent>> SignMeshes;
 
-
+	/** Setup sign and billboard components */
+	void CreateSignMeshesAndBillboards();
 
 public:
 	virtual void Tick(float DeltaTime) override;
-
 };

@@ -33,7 +33,6 @@ protected:
 	TObjectPtr<UStaticMeshComponent> PropMesh;
 
 public:
-
 	/** Return PropName */
 	FORCEINLINE FString GetPropName() const { return PropName; }
 
