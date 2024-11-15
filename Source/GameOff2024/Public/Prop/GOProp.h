@@ -7,6 +7,7 @@
 #include "GOProp.generated.h"
 
 class UTexture2D;
+class UMaterialInstance;
 
 UCLASS()
 class GAMEOFF2024_API AGOProp : public AActor
@@ -21,6 +22,8 @@ public:
 	FString PropName = "";
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Prop")
 	TObjectPtr<UTexture2D> PropImage;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Prop")
+	TObjectPtr<UMaterialInstance> PropMaterial;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Prop")
 	bool PropCanBePickedUp = true;
 
@@ -43,4 +46,12 @@ public:
 	/** Set PropCanBePickedUp */
 	UFUNCTION(BlueprintCallable, Category = "Prop")
 	FORCEINLINE void  SetPropCanBePickedUp(bool CanBePickedUp) { PropCanBePickedUp = CanBePickedUp; }
+
+	/** Return PropImage */
+	UFUNCTION(BlueprintCallable, Category = "Prop")
+	FORCEINLINE  UTexture2D* GetPropImage() const { return PropImage; }
+
+	/** Return PropMaterial */
+	UFUNCTION(BlueprintCallable, Category = "Prop")
+	FORCEINLINE  UMaterialInstance* GetPropMaterial() const { return PropMaterial; }
 };

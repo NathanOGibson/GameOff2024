@@ -22,7 +22,7 @@ public:
 
 	/** Billboard array reference */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sign Billboards")
-	TArray<TObjectPtr<UBillboardComponent>> SignBillboards;
+	TArray<TObjectPtr<UBillboardComponent>> TicketBillboards;
 
 	/** Initialise Prop Controller */
 	UFUNCTION(BlueprintCallable, Category = "Prop Controller")
@@ -38,11 +38,15 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> BoothMesh;
 	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TArray<TObjectPtr<UStaticMeshComponent>> SignMeshes;
+	TArray<TObjectPtr<UStaticMeshComponent>> TicketMeshes;
 
 	/** Setup sign and billboard components */
 	void CreateSignMeshesAndBillboards();
 
 public:
 	virtual void Tick(float DeltaTime) override;
+
+	/** Returns TicketMeshes */
+	UFUNCTION(BlueprintCallable, Category = "Ticket")
+	FORCEINLINE TArray<UStaticMeshComponent*> GetTicketMeshes() const { return TicketMeshes; }
 };

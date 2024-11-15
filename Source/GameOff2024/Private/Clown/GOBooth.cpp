@@ -29,21 +29,21 @@ void AGOBooth::CreateSignMeshesAndBillboards()
 	for (int32 i = 0; i < 5; i++)
 	{
 		// Dynamically create static mesh components
-		FName SignMeshFName(*FString::Printf(TEXT("SignMesh_%d"), i + 1));
-		UStaticMeshComponent* SignMesh = CreateDefaultSubobject<UStaticMeshComponent>(SignMeshFName);
-		if (SignMesh)
+		FName TicketMeshFName(*FString::Printf(TEXT("TicketMesh_%d"), i + 1));
+		UStaticMeshComponent* TicketMesh = CreateDefaultSubobject<UStaticMeshComponent>(TicketMeshFName);
+		if (TicketMesh)
 		{
-			SignMesh->SetupAttachment(RootComponent); // Attach to root
-			SignMeshes.Add(SignMesh); // Add to array
+			TicketMesh->SetupAttachment(RootComponent); // Attach to root
+			TicketMeshes.Add(TicketMesh); // Add to array
 		}
 
 		// Dynamically create billboard components and attach to the mesh
-		FName SignBillboardName(*FString::Printf(TEXT("SignBillboard_%d"), i + 1));
-		UBillboardComponent* SignBillboard = CreateDefaultSubobject<UBillboardComponent>(SignBillboardName);
-		if (SignBillboard)
+		FName TicketBillboardName(*FString::Printf(TEXT("TicketBillboard_%d"), i + 1));
+		UBillboardComponent* TicketBillboard = CreateDefaultSubobject<UBillboardComponent>(TicketBillboardName);
+		if (TicketBillboard)
 		{
-			SignBillboard->SetupAttachment(SignMesh); // Attach to static mesh
-			SignBillboards.Add(SignBillboard); // Add to array
+			TicketBillboard->SetupAttachment(TicketMesh); // Attach to static mesh
+			TicketBillboards.Add(TicketBillboard); // Add to array
 		}
 	}
 }

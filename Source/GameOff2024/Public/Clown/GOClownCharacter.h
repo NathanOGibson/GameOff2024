@@ -134,7 +134,6 @@ private:
 	bool IsPlayerInLineOfSight(FVector PlayerLocation, FVector ClownLocation);
 	void AdjustClownDetectionBasedOnPlayerMovement();
 
-
 	/** State functions */
 	void HandleIdleState();
 	void HandleGetPatrolPointState();
@@ -143,7 +142,6 @@ private:
 	void HandlGetSearchPointState();
 	void HandleSearchState();
 	void HandleJumpscareState();
-
 
 public:
 	/** Set the AI's state */

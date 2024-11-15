@@ -39,10 +39,8 @@ private:
 	/** Arrays for prop references and spawn locations */
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
 	TArray<TObjectPtr<AGOProp>> AllProps;
-
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
 	TArray<TObjectPtr<AGOProp>> ChosenProps;
-
 	UPROPERTY(VisibleAnywhere, Category = "Prop")
 	TArray<TObjectPtr<AGOProp>> InaccessibleProps;
 
@@ -92,13 +90,4 @@ public:
 	/** Assign amount of Props to choose and spawn */
 	UFUNCTION(BlueprintCallable, Category = "PropController")
 	FORCEINLINE void SetPropsToChooseAndSpawn(int32 NewPropsToChoose, int32 NewPropsToSpawn) { PropsToChoose = NewPropsToChoose; PropsToSpawn = NewPropsToSpawn; }
-
-
-
-
-
-
-
-
-
 };
