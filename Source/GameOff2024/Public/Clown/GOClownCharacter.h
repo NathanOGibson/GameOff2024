@@ -19,6 +19,7 @@ enum class EClownState : uint8
 };
 
 class AGOClownAIController;
+class UBillboardComponent;
 
 UCLASS()
 class GAMEOFF2024_API AGOClownCharacter : public ACharacter

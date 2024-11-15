@@ -9,7 +9,7 @@
 #include "Components/SplineComponent.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
-
+#include "Clown/Patrol/GOPatrolPoint.h"
 AGOClownAIController::AGOClownAIController()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -20,23 +20,44 @@ void AGOClownAIController::BeginPlay()
 {
 	Super::BeginPlay();
 	Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	InitialiseGOPatrolPointReferences();
 }
 
 void AGOClownAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	CharacterLocation = GetPawn()->GetActorLocation();
 	CharacterRotation = GetPawn()->GetActorRotation();
 }
 
-FVector AGOClownAIController::GetPatrolPoint()
+void AGOClownAIController::InitialiseGOPatrolPointReferences()
 {
+	// Array to hold all actors of class AGOPatrolPoint found in the world
+	TArray<AActor*> OutActors;
+
+	// Get all actors of class AGOPatrolPoint in the current world and store them in OutActors
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AGOPatrolPoint::StaticClass(), OutActors);
+
+	for (AActor* Actor : OutActors)
+	{
+		AGOPatrolPoint* PatrolPointActor = Cast<AGOPatrolPoint>(Actor);
+		if (PatrolPointActor) GOPatrolPoints.Add(PatrolPointActor);
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("GOPatrolPoints count: %d"), GOPatrolPoints.Num()));
+}
+
+void AGOClownAIController::TempFunc()
+{
+	/*
 	// Calculate a random patrol direction based on the forward vector and a random angle
 	FVector PatrolDirection = FRotator(0, FMath::RandRange(-MaxPatrolAngle, MaxPatrolAngle), 0).RotateVector(CharacterRotation.Vector());
 
 	// Determine the target patrol point
 	FVector TargetPatrolPoint = CharacterLocation + PatrolDirection * PatrolDistance;
 
+	DrawDebugSphere(GetWorld(), TargetPatrolPoint, 8.f, 8.f, FColor::Red, false, 1000.f);
 
 	// Find a path to the patrol point within the navigation mesh
 	UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, TargetPatrolPoint);
@@ -54,7 +75,72 @@ FVector AGOClownAIController::GetPatrolPoint()
 	PatrolPoint = NavPath->PathPoints.Last();
 	FirstPathPoint = NavPath->PathPoints[1];
 
-	return PatrolPoint;
+	return PatrolPoint;*/
+}
+
+FVector AGOClownAIController::GetPatrolPoint()
+{
+	// Define the desired angle and max distance for patrol point selection
+	FVector BestPatrolPoint = FVector::ZeroVector;
+	float BestDistance = FLT_MAX;
+
+	// Loop through preplaced patrol points
+	for (AGOPatrolPoint* GOPatrolPoint : GOPatrolPoints)
+	{
+		FVector PatrolPointLocation = GOPatrolPoint->GetActorLocation();
+
+		// Calculate the direction to the patrol point
+		FVector DirectionToPatrolPoint = (PatrolPointLocation - CharacterLocation).GetSafeNormal();
+
+		// Get the forward direction of the character
+		FVector ForwardVector = CharacterRotation.Vector();
+
+		// Check if the patrol point is within the allowed patrol angle
+		float AngleBetween = FMath::Acos(FVector::DotProduct(DirectionToPatrolPoint, ForwardVector)) * (180.0f / PI);
+		if (AngleBetween > MaxPatrolAngle) continue;
+
+		// Check if the patrol point is within the maximum patrol distance
+		float DistanceToPatrolPoint = FVector::Dist(CharacterLocation, PatrolPointLocation);
+		if (DistanceToPatrolPoint > PatrolDistance) continue;
+
+		// Find the nearest valid patrol point
+		if (DistanceToPatrolPoint < BestDistance)
+		{
+			BestDistance = DistanceToPatrolPoint;
+			BestPatrolPoint = PatrolPointLocation;
+		}
+	}
+
+	// If no valid patrol point is found, calculate a random patrol point
+	if (BestPatrolPoint == FVector::ZeroVector)
+	{
+		// Calculate a random patrol direction based on the forward vector and a random angle
+		FVector PatrolDirection = FRotator(0, FMath::RandRange(-MaxPatrolAngle, MaxPatrolAngle), 0).RotateVector(CharacterRotation.Vector());
+
+		// Determine the target patrol point
+		BestPatrolPoint = CharacterLocation + PatrolDirection * PatrolDistance;
+
+		// Find a path to the patrol point within the navigation mesh
+		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, BestPatrolPoint);
+		if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0) return FVector::ZeroVector;
+
+		SplinePath->ClearSplinePoints();
+
+		for (const FVector& PathPoint : NavPath->PathPoints)
+		{
+			SplinePath->AddSplinePoint(PathPoint, ESplineCoordinateSpace::World);
+			// DrawDebugSphere(GetWorld(), PathPoint, 8.f, 8.f, FColor::Green, false, 5.f);
+		}
+
+		// Set the final patrol point to the last valid point in the path
+		BestPatrolPoint = NavPath->PathPoints.Last();
+		PatrolPoint = BestPatrolPoint;
+	}
+
+	// Optionally draw the chosen patrol point for debugging
+	DrawDebugSphere(GetWorld(), BestPatrolPoint, 8.f, 8.f, FColor::Red, false, 1000.f);
+
+	return BestPatrolPoint;
 }
 
 void AGOClownAIController::MoveToPatrolPoint()

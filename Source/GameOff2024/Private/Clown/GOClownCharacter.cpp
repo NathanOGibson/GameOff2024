@@ -6,6 +6,7 @@
 #include "Clown/GOClownAIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/BillboardComponent.h"
 
 AGOClownCharacter::AGOClownCharacter()
 {

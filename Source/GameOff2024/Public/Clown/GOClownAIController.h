@@ -12,6 +12,7 @@
 
 class AGOClownCharacter;
 class USplineComponent;
+class AGOPatrolPoint;
 
 UCLASS()
 class GAMEOFF2024_API AGOClownAIController : public AAIController
@@ -43,6 +44,14 @@ public:
 	bool HasReachedSearchPoint(float ReachThreshold);
 
 private:
+	/////////////////////////////////////////////////////////////
+
+	void TempFunc();
+
+	void InitialiseGOPatrolPointReferences();
+	/////////////////////////////////////////////////////////////
+
+
 	/* Character current location and rotation variables **/
 	FVector CharacterLocation;
 	FRotator CharacterRotation;
@@ -52,6 +61,8 @@ private:
 	TObjectPtr<USplineComponent> SplinePath;
 
 	/** Patrol variables */
+	UPROPERTY(EditAnywhere, Category = "Clown Detection")
+	TArray<AGOPatrolPoint*> GOPatrolPoints;
 	FVector FirstPathPoint;
 	FVector PatrolPoint;
 	float PatrolDistance = 1000.0f;
