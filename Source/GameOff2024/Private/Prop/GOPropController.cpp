@@ -9,6 +9,8 @@
 AGOPropController::AGOPropController()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Create the root scene component
 	ControllerSceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("ControllerSceneComponent"));
 	ControllerSceneComponent->SetupAttachment(RootComponent);
 	SetRootComponent(ControllerSceneComponent);
@@ -19,11 +21,10 @@ void AGOPropController::BeginPlay()
 	Super::BeginPlay();
 	PropsSavedSpawnCount = PropsToSpawn;
 }
-
 void AGOPropController::ResetAndInitialiseProps()
 {
 	InitialisePropReferences();
-	ResetPropLocations();
+	ResetAllPropLocations();
 }
 
 void AGOPropController::SetupPropsAndSpawns(TArray<AGOProp*>& ChosenTargetProps)
@@ -40,7 +41,7 @@ void AGOPropController::SetupPropsAndSpawns(TArray<AGOProp*>& ChosenTargetProps)
 
 void AGOPropController::ClearAndResetProps()
 {
-	ResetPropLocations();
+	ResetAllPropLocations();
 	ClearPropData();
 }
 
@@ -115,15 +116,6 @@ void AGOPropController::ClearPropData()
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Prop data cleared"));
 }
 
-void AGOPropController::ResetPropLocations()
-{
-	// Loop through all props and reset their location and rotation
-	for (AGOProp* Prop : AllProps)
-	{
-		ResetPropLocation(Prop);
-	}
-}
-
 void AGOPropController::InitialiseSpawnLocations()
 {
 	// Get all child components of this actor
@@ -144,7 +136,6 @@ void AGOPropController::InitialiseSpawnLocations()
 
 	// Add the randomly selected spawn point to the list of chosen spawn locations
 	ChildrenSpawnLocations.Add(CurrentChild);
-	//GEngine->AddOnScreenDebugMessage(-1, 50.f, FColor::Red, FString::Printf(TEXT("Spawn Point: %s"), *CurrentChild->GetName()));
 
 	// Remove the selected child from the available components
 	ChildrenComponents.Remove(CurrentChild);
@@ -158,12 +149,9 @@ void AGOPropController::InitialiseSpawnLocations()
 		// Display the name of the newly selected spawn point for debugging
 
 		// Add the furthest spawn point to the list and remove it from the available components
-		//GEngine->AddOnScreenDebugMessage(-1, 50.f, FColor::Red, FString::Printf(TEXT("Spawn Point: %s"), *CurrentChild->GetName()));
 		ChildrenSpawnLocations.Add(CurrentChild);
 		ChildrenComponents.Remove(CurrentChild);
 	}
-
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Spawn Points: %d"), ChildrenSpawnLocations.Num()));
 }
 
 USceneComponent* AGOPropController::GetFurthestSpawnPoint(TArray<USceneComponent*>& StartPoints, TArray<USceneComponent*>& ChildrenPoints)
@@ -205,6 +193,22 @@ USceneComponent* AGOPropController::GetFurthestSpawnPoint(TArray<USceneComponent
 	}
 
 	return FurthestSpawnPoint;  // Return the spawn point that is furthest from the start points
+}
+
+void AGOPropController::ResetAllPropLocations()
+{
+	// Loop through all props and reset their location and rotation
+	for (AGOProp* Prop : AllProps)
+	{
+		ResetPropLocation(Prop);
+	}
+}
+
+void AGOPropController::ResetPropLocation(AGOProp* Prop)
+{
+	// Set the prop's location to the controller's location
+	// Set the prop's rotation to a default (zeroed) rotation
+	SetPropLocationAndRotation(Prop, GetActorLocation(), FRotator(0.f, 0.f, 0.f));
 }
 
 void AGOPropController::SetPropLocations()
@@ -314,6 +318,27 @@ void AGOPropController::SetPropLocationAndRotation(AGOProp* Prop, FVector ActorL
 	Prop->SetActorLocation(ActorLocation);
 	Prop->SetActorRotation(ActorRotation);
 }
+
+void AGOPropController::StoreInteractedProp(AGOProp* PropToStore)
+{
+	ResetPropLocation(PropToStore);
+}
+
+void AGOPropController::SwapInteractedProps(AGOProp* StoredProp, AGOProp* PropToStore)
+{
+	if (!PropToStore && !StoredProp) return;
+
+	// Set the PropToStore location and rotation to the stored prop's
+	FVector ToStoreLocation = PropToStore->GetActorLocation();
+	FRotator ToStoreRotation = PropToStore->GetActorRotation();
+
+	// Set the StoredProp location and rotation to the PropToStore's
+	SetPropLocationAndRotation(StoredProp, ToStoreLocation, ToStoreRotation);
+
+	// Set the PropToStore location and rotation to off screen
+	ResetPropLocation(PropToStore);
+}
+
 bool AGOPropController::IsCorrectProp(AGOProp* Prop, int32 BillboardIndex)
 {
 	if (!ChosenProps.Contains(Prop)) return false;
@@ -334,34 +359,9 @@ void AGOPropController::ResetInaccessibleProps()
 	}
 	InaccessibleProps.Empty();
 }
+
 bool AGOPropController::PropsCollected()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("IAProps: %d, PropToChoose: %d"), InaccessibleProps.Num(), PropsToChoose));
 	return InaccessibleProps.Num() == PropsToChoose;
-}
-void AGOPropController::ResetPropLocation(AGOProp* Prop)
-{
-	// Set the prop's location to the controller's location
-	// Set the prop's rotation to a default (zeroed) rotation
-	SetPropLocationAndRotation(Prop, GetActorLocation(), FRotator(0.f, 0.f, 0.f));
-}
-
-void AGOPropController::StoreInteractedProp(AGOProp* PropToStore)
-{
-	ResetPropLocation(PropToStore);
-}
-
-void AGOPropController::SwapInteractedProps(AGOProp* StoredProp, AGOProp* PropToStore)
-{
-	if (!PropToStore && !StoredProp) return;
-
-	// Set the PropToStore location and rotation to the stored prop's
-	FVector ToStoreLocation = PropToStore->GetActorLocation();
-	FRotator ToStoreRotation = PropToStore->GetActorRotation();
-
-	// Set the StoredProp location and rotation to the PropToStore's
-	SetPropLocationAndRotation(StoredProp, ToStoreLocation, ToStoreRotation);
-
-	// Set the PropToStore location and rotation to off screen
-	ResetPropLocation(PropToStore);
 }
