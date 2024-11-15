@@ -32,7 +32,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-
 	/** Booth components */
 	TObjectPtr<USceneComponent> BoothSceneComponent;
 	UPROPERTY(EditAnywhere, Category = "Mesh")
