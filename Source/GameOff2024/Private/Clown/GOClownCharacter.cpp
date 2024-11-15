@@ -28,22 +28,8 @@ void AGOClownCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
-
-
 	// SWITCH FOR SETTING SPEED
 
-
-	//if (FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= DetectionRange)
-	//{
-	//	// Switch to chase state if close enough to the player
-	//	ClownState = EClownState::ECS_Chase;
-	//}
-	//else if (ClownState != EClownState::ECS_Patrol || ClownState != EClownState::ECS_Idle || ClownState != EClownState::ECS_GetPatrolPoint)
-	//{
-	//	// Patrol if far away from the player
-	//	ClownState = EClownState::ECS_GetPatrolPoint;
-	//}
 	switch (ClownState)
 	{
 	case EClownState::ECS_Idle:
@@ -76,14 +62,104 @@ void AGOClownCharacter::Tick(float DeltaTime)
 	}
 }
 
-void AGOClownCharacter::JumpscarePlayer()
+// STATE FUNCTIONS
+void AGOClownCharacter::HandleIdleState()
 {
-	if (Player && FVector::Dist(GetActorLocation(), Player->GetActorLocation()) <= JumpscareRange)
+	// Delay to transition into get patrol point state
+	IdleDelay(IdleDelayAmount);
+
+	// Transition to Chase State if player detected
+	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
+}
+
+void AGOClownCharacter::HandleGetPatrolPointState()
+{
+	// Get Patrol point
+	FVector NewMovePoint = ClownAIController->GetPatrolPoint();
+
+	// Transition to Patrol state if Patrol point found
+	if (NewMovePoint != FVector::ZeroVector) ClownState = EClownState::ECS_Patrol;
+
+	// If no patrol point found, adjust patrol settings
+	ClownAIController->AdjustPatrolSettings();
+
+	// Transition to Chase State if player detected
+	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
+}
+
+void AGOClownCharacter::HandlePatrolState()
+{
+	// Set movement speed to patrol movement speed
+	SetCharacterSpeed(PatrolMovementSpeed);
+
+	// Reset patrol settings
+	ClownAIController->ResetPatrolSettings();
+
+	// Check if patrol point reached
+	if (ClownAIController->HasReachedPatrolPoint(DistanceThreshold))
 	{
-		// Logic to trigger the jumpscare animation or event
-		// E.g., play jumpscare animation, sound, and possibly reduce the player's health
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Jumpscare triggered!"));
+		// Delay to transition into patrol state
+		PatrolDelay(PatrolDelayAmount);
 	}
+	else
+	{
+		ClownAIController->MoveToPatrolPoint();
+	}
+
+	// Transition to Chase State if player detected
+	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
+}
+
+void AGOClownCharacter::HandleChaseState()
+{
+	// Set movement speed to chase movement speed
+	SetCharacterSpeed(ChaseMovementSpeed);
+
+	// Chase the player
+	ClownAIController->ChasePlayer();
+
+	// Transition to Chase State if player detected
+	if (!CheckPlayerWithinDetectionRange()) ChaseDelay(ChaseDelayAmount);
+
+	// Check if player inside jumpscare range (JUMPSCARE)
+	// TODO
+}
+
+void AGOClownCharacter::HandlGetSearchPointState()
+{
+	// cache most recent player location
+	FVector NewSearchPoint = ClownAIController->GetSearchPoint();
+
+	// Transition to search state if search point found
+	if (NewSearchPoint != FVector::ZeroVector) ClownState = EClownState::ECS_Search;
+}
+
+void AGOClownCharacter::HandleSearchState()
+{
+	// Set movement speed to search movement speed
+	SetCharacterSpeed(SearchMovementSpeed);
+
+	// Check if search point reached
+	if (ClownAIController->HasReachedSearchPoint(DistanceThreshold))
+	{
+		// Delay to transition into Idle state
+		SearchDelay(SearchDelayAmount);
+	}
+	else
+	{
+		ClownAIController->MoveToSearchPoint();
+	}
+
+	// Transition to Chase State if player detected
+	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
+}
+
+void AGOClownCharacter::HandleJumpscareState()
+{
+	// TODO
+	// Play jumpscare animation
+	// Play jumpscare sound
+	// End game
 }
 
 void AGOClownCharacter::SetCharacterSpeed(float Speed)
@@ -94,111 +170,11 @@ void AGOClownCharacter::SetCharacterSpeed(float Speed)
 	}
 }
 
-// STATE FUNCTIONS
-void AGOClownCharacter::HandleIdleState()
-{
-	// Do nothing
-
-	// Check if timer finished (GET PATROL POINT) IdleDelayAmount
-	IdleDelay(IdleDelayAmount);
-
-	// Check for player detection (CHASE)
-	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
-}
-
-void AGOClownCharacter::HandleGetPatrolPointState()
-{
-	// Get Patrol point
-	FVector NewMovePoint;
-	NewMovePoint = ClownAIController->GetPatrolPoint();
-
-	// Check Patrol point found (PATROL)
-	if (NewMovePoint != FVector::ZeroVector) ClownState = EClownState::ECS_Patrol;
-	ClownAIController->AdjustPatrolSettings();
-
-	// Check for player detection (CHASE)
-	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
-}
-
-void AGOClownCharacter::HandlePatrolState()
-{
-	SetCharacterSpeed(PatrolMovementSpeed);
-
-	ClownAIController->ResetPatrolSettings();
-	// Move towards the patrol point
-
-	// Check if reached patrol point (IDLE)
-	if (ClownAIController->HasReachedPatrolPoint(100.f))
-	{
-		PatrolDelay(PatrolDelayAmount);
-	}
-	else
-	{
-		ClownAIController->MoveToPatrolPoint();
-	}
-
-	// Check for player detection (CHASE)
-	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
-}
-
-void AGOClownCharacter::HandleChaseState()
-{
-	SetCharacterSpeed(ChaseMovementSpeed);
-
-	// Chase the player
-	ClownAIController->ChasePlayer();
-
-	// Check if player outside player detection range (SEARCH)
-	if (!CheckPlayerWithinDetectionRange())
-	{
-		ChaseDelay(ChaseDelayAmount);
-	}
-	// Check if player inside jumpscare range (JUMPSCARE)
-}
-
-void AGOClownCharacter::HandlGetSearchPointState()
-{
-	// cache most recent player location
-	FVector NewSearchPoint;
-	NewSearchPoint = ClownAIController->GetSearchPoint();
-	if (NewSearchPoint != FVector::ZeroVector) ClownState = EClownState::ECS_Search;
-
-	// Check search point found (SEARCH)
-
-}
-
-void AGOClownCharacter::HandleSearchState()
-{
-	SetCharacterSpeed(SearchMovementSpeed);
-	// Move to search location
-	//GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, TEXT("Searching for player..."));
-
-	// Check if timer finished (IDLE) SearchDelayAmount
-	if (ClownAIController->HasReachedSearchPoint(100.f))
-	{
-		SearchDelay(SearchDelayAmount);
-	}
-	else
-	{
-		ClownAIController->MoveToSearchPoint();
-	}
-
-	// Check for player detection (CHASE)
-	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
-}
-
-void AGOClownCharacter::HandleJumpscareState()
-{
-	// Play jumpscare animation
-	// Play jumpscare sound
-	// End game
-}
-
 bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 {
 	if (!Player || !ClownAIController) return false;
 
-	// Calculate distance and direction to the player
+	// Get locations and calculate distance
 	const FVector PlayerLocation = Player->GetActorLocation();
 	const FVector ClownLocation = GetActorLocation();
 	const float DistanceToPlayer = FVector::Dist(ClownLocation, PlayerLocation);
@@ -206,6 +182,7 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 	// Always decay clown detection
 	AdjustClownDetection(DetectionDecayRate);
 
+	// Draw detection range
 	DebugDetectionRange();
 
 	if (!IsPlayerWithinDetectionRange(DistanceToPlayer)) return false;
@@ -249,7 +226,7 @@ bool AGOClownCharacter::IsPlayerWithinDetectionRange(float DistanceToPlayer)
 {
 	if (DistanceToPlayer > DetectionQueryRange)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, TEXT("Outside detection range"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, TEXT("Outside detection range"));
 		return false;
 	}
 
@@ -263,7 +240,7 @@ bool AGOClownCharacter::IsPlayerWithinDetectionAngle(FVector PlayerLocation)
 
 	if (AngleDegrees > DetectionAngle / 2.0f)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, TEXT("Outside detection angle"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, TEXT("Outside detection angle"));
 		return false;
 	}
 
@@ -275,7 +252,7 @@ bool AGOClownCharacter::IsPlayerWithinAgroRange(float DistanceToPlayer)
 	if (DistanceToPlayer <= DetectionAgroRange)
 	{
 		ClownDetection = DetectionThreshold;
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("AGRO"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("AGRO"));
 		return true;
 	}
 
@@ -304,30 +281,21 @@ void AGOClownCharacter::AdjustClownDetectionBasedOnPlayerMovement()
 	if (!CheckPlayerIsMoving())
 	{
 		AdjustClownDetection(DetectionNotWalkingIncreaseRate);
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("NOT WALKING"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("NOT WALKING"));
 	}
 	else if (CheckPlayerIsCrouching())
 	{
 		AdjustClownDetection(DetectionCrouchingIncreaseRate);
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("CROUCHING"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("CROUCHING"));
 	}
 	else if (CheckPlayerIsSprinting())
 	{
 		AdjustClownDetection(DetectionSprintingIncreaseRate);
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("SPRINTING"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("SPRINTING"));
 	}
 	else
 	{
 		AdjustClownDetection(DetectionWalkingIncreaseRate);
-		GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("WALKING"));
+		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("WALKING"));
 	}
-}
-
-
-
-
-
-void AGOClownCharacter::TempFunc()
-{
-
 }
