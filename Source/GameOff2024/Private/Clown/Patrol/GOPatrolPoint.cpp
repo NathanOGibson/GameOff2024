@@ -15,3 +15,23 @@ AGOPatrolPoint::AGOPatrolPoint()
 	PatrolPointMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PatrolPointMesh"));
 	PatrolPointMesh->SetupAttachment(RootComponent);
 }
+
+void AGOPatrolPoint::SetToMaterialActive()
+{
+	SetMaterial(ActiveMaterial);
+}
+
+void AGOPatrolPoint::SetMaterialToDisabled()
+{
+	SetMaterial(DisabledMaterial);
+}
+
+void AGOPatrolPoint::SetMaterialToCached()
+{
+	SetMaterial(CachedMaterial);
+}
+
+void AGOPatrolPoint::SetMaterial(TObjectPtr<UMaterial> NewMaterial)
+{
+	PatrolPointMesh->SetMaterial(0, NewMaterial);
+}

@@ -13,6 +13,7 @@
 class AGOClownCharacter;
 class USplineComponent;
 class AGOPatrolPoint;
+class UNavigationPath;
 
 UCLASS()
 class GAMEOFF2024_API AGOClownAIController : public AAIController
@@ -32,7 +33,7 @@ public:
 	FVector GetPatrolPoint();
 	void MoveToPatrolPoint();
 	void AdjustPatrolSettings();
-	void ResetPatrolSettings() { MaxPatrolAngle = 30.0f;  PatrolDistance = CachedPatrolDistance; }
+	void ResetPatrolSettings();
 	bool HasReachedPatrolPoint(float ReachThreshold);
 
 	/** Chase functions */
@@ -49,6 +50,14 @@ private:
 	void TempFunc();
 
 	void InitialiseGOPatrolPointReferences();
+
+
+	TArray<AGOPatrolPoint*> GOStoredPatrolPoints;
+	TArray<AGOPatrolPoint*> GOPatrolPoints;
+
+	AGOPatrolPoint* CachedGOPatrolPoint;
+	bool bHasCached = false;
+
 	/////////////////////////////////////////////////////////////
 
 
@@ -61,12 +70,10 @@ private:
 	TObjectPtr<USplineComponent> SplinePath;
 
 	/** Patrol variables */
-	UPROPERTY(EditAnywhere, Category = "Clown Detection")
-	TArray<AGOPatrolPoint*> GOPatrolPoints;
 	FVector FirstPathPoint;
 	FVector PatrolPoint;
 	float PatrolDistance = 1000.0f;
-	float CachedPatrolDistance;
+	float CachedDistance = 1000.0f;
 	float MaxPatrolAngle = 30.0f;
 
 	/** Search variables */
@@ -79,5 +86,6 @@ private:
 	AActor* Player;
 
 public:
-	FORCEINLINE void SetPatrolDistance(float NewPatrolDistance) { PatrolDistance = NewPatrolDistance; CachedPatrolDistance = NewPatrolDistance; }
+	FORCEINLINE void SetPatrolDistance(float NewPatrolDistance) { PatrolDistance = NewPatrolDistance; }
+	FORCEINLINE void SetCachedDistance(float NewCachedDistance) { CachedDistance = NewCachedDistance; }
 };

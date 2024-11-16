@@ -42,10 +42,12 @@ void AGOClownAIController::InitialiseGOPatrolPointReferences()
 	for (AActor* Actor : OutActors)
 	{
 		AGOPatrolPoint* PatrolPointActor = Cast<AGOPatrolPoint>(Actor);
-		if (PatrolPointActor) GOPatrolPoints.Add(PatrolPointActor);
+		if (PatrolPointActor) GOStoredPatrolPoints.Add(PatrolPointActor);
+
+		PatrolPointActor->SetToMaterialActive();
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 100.0f, FColor::Green, FString::Printf(TEXT("GOPatrolPoints count: %d"), GOPatrolPoints.Num()));
+	GOPatrolPoints = GOStoredPatrolPoints;
 }
 
 void AGOClownAIController::TempFunc()
@@ -80,67 +82,116 @@ void AGOClownAIController::TempFunc()
 
 FVector AGOClownAIController::GetPatrolPoint()
 {
-	// Define the desired angle and max distance for patrol point selection
+	// Define variables for patrol point selection
+	AGOPatrolPoint* SelectedPatrolPoint = nullptr;
 	FVector BestPatrolPoint = FVector::ZeroVector;
-	float BestDistance = FLT_MAX;
+	float BestDistance = 0.f;
+	CurrentSplinePatrolIndex = 0;
+	bool CachedThisLoop = false;
 
-	// Loop through preplaced patrol points
+	UNavigationPath* BestNavPath = nullptr;
+
+	// Check if a cached patrol point exists
+	if (CachedGOPatrolPoint != nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Using cached patrol point"));
+
+		// Find a path to the cached patrol point
+		BestNavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, CachedGOPatrolPoint->GetActorLocation());
+		if (BestNavPath && BestNavPath->IsValid() && BestNavPath->PathPoints.Num() > 0)
+		{
+			SelectedPatrolPoint = CachedGOPatrolPoint;
+			BestPatrolPoint = CachedGOPatrolPoint->GetActorLocation();
+			bHasCached = true;
+		}
+	}
+
+	// Return early if there are no patrol points
+	if (GOPatrolPoints.Num() == 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("No patrol points available"));
+		return FVector::ZeroVector;
+	}
+
+	// Loop through all preplaced patrol points
 	for (AGOPatrolPoint* GOPatrolPoint : GOPatrolPoints)
 	{
 		FVector PatrolPointLocation = GOPatrolPoint->GetActorLocation();
-
-		// Calculate the direction to the patrol point
-		FVector DirectionToPatrolPoint = (PatrolPointLocation - CharacterLocation).GetSafeNormal();
-
-		// Get the forward direction of the character
-		FVector ForwardVector = CharacterRotation.Vector();
-
-		// Check if the patrol point is within the allowed patrol angle
-		float AngleBetween = FMath::Acos(FVector::DotProduct(DirectionToPatrolPoint, ForwardVector)) * (180.0f / PI);
-		if (AngleBetween > MaxPatrolAngle) continue;
-
-		// Check if the patrol point is within the maximum patrol distance
 		float DistanceToPatrolPoint = FVector::Dist(CharacterLocation, PatrolPointLocation);
-		if (DistanceToPatrolPoint > PatrolDistance) continue;
 
-		// Find the nearest valid patrol point
-		if (DistanceToPatrolPoint < BestDistance)
+		// Skip points outside the maximum patrol distance
+		if (DistanceToPatrolPoint > PatrolDistance)
+			continue;
+
+		// Find a path to the patrol point using the navigation system
+		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, PatrolPointLocation);
+		if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0)
+			continue;
+
+		// Update the best patrol point if this one is farther and no cached point exists
+		if (DistanceToPatrolPoint > BestDistance && !bHasCached)
 		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Selecting default patrol point"));
+
 			BestDistance = DistanceToPatrolPoint;
 			BestPatrolPoint = PatrolPointLocation;
+			BestNavPath = NavPath;
+			SelectedPatrolPoint = GOPatrolPoint;
 		}
-	}
 
-	// If no valid patrol point is found, calculate a random patrol point
-	if (BestPatrolPoint == FVector::ZeroVector)
-	{
-		// Calculate a random patrol direction based on the forward vector and a random angle
-		FVector PatrolDirection = FRotator(0, FMath::RandRange(-MaxPatrolAngle, MaxPatrolAngle), 0).RotateVector(CharacterRotation.Vector());
-
-		// Determine the target patrol point
-		BestPatrolPoint = CharacterLocation + PatrolDirection * PatrolDistance;
-
-		// Find a path to the patrol point within the navigation mesh
-		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, BestPatrolPoint);
-		if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0) return FVector::ZeroVector;
-
-		SplinePath->ClearSplinePoints();
-
-		for (const FVector& PathPoint : NavPath->PathPoints)
+		// Cache a nearby patrol point if not already cached in this loop
+		if (DistanceToPatrolPoint < CachedDistance && GOPatrolPoint != CachedGOPatrolPoint && !CachedThisLoop)
 		{
-			SplinePath->AddSplinePoint(PathPoint, ESplineCoordinateSpace::World);
-			// DrawDebugSphere(GetWorld(), PathPoint, 8.f, 8.f, FColor::Green, false, 5.f);
-		}
+			if (CachedGOPatrolPoint != nullptr)
+			{
+				float DistanceBetweenCachedPoints = FVector::Dist(PatrolPointLocation, CachedGOPatrolPoint->GetActorLocation());
+				if (DistanceBetweenCachedPoints < CachedDistance) continue;
+			}
 
-		// Set the final patrol point to the last valid point in the path
-		BestPatrolPoint = NavPath->PathPoints.Last();
-		PatrolPoint = BestPatrolPoint;
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, TEXT("Caching patrol point"));
+
+			CachedGOPatrolPoint = GOPatrolPoint;
+			CachedGOPatrolPoint->SetMaterialToCached();
+			CachedThisLoop = true;
+		}
 	}
+
+	// Handle the case where no valid path was found
+	if (!BestNavPath)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("No valid path found"));
+		return FVector::ZeroVector;
+	}
+
+	// Clear the cached patrol point if it matches the selected one
+	if (SelectedPatrolPoint == CachedGOPatrolPoint)
+	{
+		CachedGOPatrolPoint = nullptr;
+	}
+
+	// Remove the selected patrol point from the list and update its material
+	if (SelectedPatrolPoint)
+	{
+		GOPatrolPoints.Remove(SelectedPatrolPoint);
+		SelectedPatrolPoint->SetMaterialToDisabled();
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("GOPatrolPoints: %d"), GOPatrolPoints.Num()));
+	}
+
+	// Clear and populate the spline path
+	SplinePath->ClearSplinePoints();
+	for (const FVector& PathPoint : BestNavPath->PathPoints)
+	{
+		//DrawDebugSphere(GetWorld(), PathPoint, 30.f, 8.f, FColor::Orange, false, 10.f);
+		SplinePath->AddSplinePoint(PathPoint, ESplineCoordinateSpace::World);
+	}
+
+	// Set the final patrol point to the last valid point in the path
+	PatrolPoint = BestNavPath->PathPoints.Last();
 
 	// Optionally draw the chosen patrol point for debugging
-	DrawDebugSphere(GetWorld(), BestPatrolPoint, 8.f, 8.f, FColor::Red, false, 1000.f);
+	//DrawDebugSphere(GetWorld(), BestPatrolPoint, 30.f, 8.f, FColor::Blue, false, 10.f);
 
-	return BestPatrolPoint;
+	return PatrolPoint;
 }
 
 void AGOClownAIController::MoveToPatrolPoint()
@@ -172,8 +223,23 @@ void AGOClownAIController::MoveToPatrolPoint()
 
 void AGOClownAIController::AdjustPatrolSettings()
 {
-	MaxPatrolAngle += 10.f;
-	if (PatrolDistance > 400.f) PatrolDistance -= 100.f;
+	/*MaxPatrolAngle += 10.f;
+	if (PatrolDistance > 400.f) PatrolDistance -= 100.f;*/
+}
+
+void AGOClownAIController::ResetPatrolSettings()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Resetting"));
+	bHasCached = false;
+	CachedGOPatrolPoint = nullptr;
+	if (GOPatrolPoints.Num() == 0)
+	{
+		for (AGOPatrolPoint* GOPatrolPoint : GOStoredPatrolPoints)
+		{
+			if (GOPatrolPoint) GOPatrolPoints.Add(GOPatrolPoint);
+			GOPatrolPoint->SetToMaterialActive();
+		}
+	}
 }
 
 bool AGOClownAIController::HasReachedPatrolPoint(float ReachThreshold)

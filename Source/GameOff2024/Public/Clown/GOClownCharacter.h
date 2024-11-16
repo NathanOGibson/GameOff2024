@@ -102,6 +102,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float PatrolDistance = 1000.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
+	float CachedDistance = 1000.f;
+	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float PatrolRadius = 1000.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float DetectionQueryRange = 1500.f;

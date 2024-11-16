@@ -23,6 +23,7 @@ void AGOClownCharacter::BeginPlay()
 	ClownAIController = Cast<AGOClownAIController>(GetController());
 	Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 	ClownAIController->SetPatrolDistance(PatrolDistance);
+	ClownAIController->SetCachedDistance(CachedDistance);
 }
 
 void AGOClownCharacter::Tick(float DeltaTime)
@@ -83,17 +84,27 @@ void AGOClownCharacter::HandleIdleState()
 
 void AGOClownCharacter::HandleGetPatrolPointState()
 {
+	// Transition to Chase State if player detected
+	if (CheckPlayerWithinDetectionRange())
+	{
+		ClownState = EClownState::ECS_Chase;
+		return;
+	}
+
 	// Get Patrol point
 	FVector NewMovePoint = ClownAIController->GetPatrolPoint();
 
 	// Transition to Patrol state if Patrol point found
-	if (NewMovePoint != FVector::ZeroVector) ClownState = EClownState::ECS_Patrol;
+	if (NewMovePoint != FVector::ZeroVector)
+	{
+		ClownState = EClownState::ECS_Patrol;
+		return;
+	}
 
 	// If no patrol point found, adjust patrol settings
-	ClownAIController->AdjustPatrolSettings();
+	ClownAIController->ResetPatrolSettings();
 
-	// Transition to Chase State if player detected
-	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
+
 }
 
 void AGOClownCharacter::HandlePatrolState()
@@ -102,7 +113,7 @@ void AGOClownCharacter::HandlePatrolState()
 	SetCharacterSpeed(PatrolMovementSpeed);
 
 	// Reset patrol settings
-	ClownAIController->ResetPatrolSettings();
+	//ClownAIController->ResetPatrolSettings();
 
 	// Check if patrol point reached
 	if (ClownAIController->HasReachedPatrolPoint(DistanceThreshold))
