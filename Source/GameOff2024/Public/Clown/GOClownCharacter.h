@@ -15,6 +15,7 @@ enum class EClownState : uint8
 	ECS_Chase UMETA(DisplayName = "Chase"),
 	ECS_GetSearchPoint UMETA(DisplayName = "Get Search Point"),
 	ECS_Search UMETA(DisplayName = "Search"),
+	ECS_Retreat UMETA(DisplayName = "Retreat"),
 	ECS_Jumpscare UMETA(DisplayName = "Jumpscare"),
 };
 
@@ -127,6 +128,8 @@ private:
 	float ChaseMovementSpeed = 400.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float SearchMovementSpeed = 300.f;
+	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
+	float RetreatMovementSpeed = 1400.f;
 
 	/** Distance threshold */
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
@@ -138,10 +141,10 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "Clown AI Controller")
 	void SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation);
 
-	/* Adjust character speed functions **/
+	/** Adjust character speed functions */
 	void SetCharacterSpeed(float Speed);
 
-	/* Detection functions **/
+	/** Detection functions */
 	bool CheckPlayerWithinDetectionRange();
 	void AdjustClownDetection(float DetectionAdjustmentAmount);
 	void DebugDetectionRange();
@@ -152,6 +155,17 @@ private:
 	void AdjustClownDetectionBasedOnPlayerMovement();
 	bool IsPlayerWithinJumpscareRange();
 
+	/** Set to retreat state */
+	UFUNCTION(BlueprintCallable, Category = "Clown Retreat")
+	void SetToRetreatState(FVector NewRetreatLocation);
+	UFUNCTION(BlueprintCallable, Category = "Clown Retreat")
+	bool HasFinishedRetreating();
+
+	/** Stored location checks */
+	FVector PatrolPoint;
+	FVector SearchPoint;
+	FVector RetreatPoint;
+
 	/** State functions */
 	void HandleIdleState();
 	void HandleGetPatrolPointState();
@@ -159,6 +173,7 @@ private:
 	void HandleChaseState();
 	void HandlGetSearchPointState();
 	void HandleSearchState();
+	void HandleRetreatState();
 	void HandleJumpscareState();
 
 public:

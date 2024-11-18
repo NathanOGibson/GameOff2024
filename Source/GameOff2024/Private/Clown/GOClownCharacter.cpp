@@ -62,6 +62,10 @@ void AGOClownCharacter::Tick(float DeltaTime)
 		HandleSearchState();
 		break;
 
+	case EClownState::ECS_Retreat:
+		HandleRetreatState();
+		break;
+
 	case EClownState::ECS_Jumpscare:
 		HandleJumpscareState();
 		break;
@@ -85,7 +89,7 @@ void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotat
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 void AGOClownCharacter::TODO_FUNCTIONS()
 {
-	// Jumpscare function
+	// Retreat function
 
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,10 +114,10 @@ void AGOClownCharacter::HandleGetPatrolPointState()
 	}
 
 	// Get Patrol point
-	FVector NewMovePoint = ClownAIController->GetPatrolPoint();
+	PatrolPoint = ClownAIController->GetPatrolPoint();
 
 	// Transition to Patrol state if Patrol point found
-	if (NewMovePoint != FVector::ZeroVector)
+	if (PatrolPoint != FVector::ZeroVector)
 	{
 		ClownState = EClownState::ECS_Patrol;
 		return;
@@ -134,7 +138,8 @@ void AGOClownCharacter::HandlePatrolState()
 	//ClownAIController->ResetPatrolSettings();
 
 	// Check if patrol point reached
-	if (ClownAIController->HasReachedPatrolPoint(DistanceThreshold))
+		//if (ClownAIController->HasReachedPatrolPoint(DistanceThreshold))
+	if (ClownAIController->HasReachedLocation(PatrolPoint, DistanceThreshold))
 	{
 		// Delay to transition into patrol state
 		PatrolDelay(PatrolDelayAmount);
@@ -169,10 +174,10 @@ void AGOClownCharacter::HandleChaseState()
 void AGOClownCharacter::HandlGetSearchPointState()
 {
 	// cache most recent player location
-	FVector NewSearchPoint = ClownAIController->GetSearchPoint();
+	SearchPoint = ClownAIController->GetSearchPoint();
 
 	// Transition to search state if search point found
-	if (NewSearchPoint != FVector::ZeroVector) ClownState = EClownState::ECS_Search;
+	if (SearchPoint != FVector::ZeroVector) ClownState = EClownState::ECS_Search;
 }
 
 void AGOClownCharacter::HandleSearchState()
@@ -181,7 +186,8 @@ void AGOClownCharacter::HandleSearchState()
 	SetCharacterSpeed(SearchMovementSpeed);
 
 	// Check if search point reached
-	if (ClownAIController->HasReachedSearchPoint(DistanceThreshold))
+		//if (ClownAIController->HasReachedSearchPoint(DistanceThreshold))
+	if (ClownAIController->HasReachedLocation(SearchPoint, DistanceThreshold))
 	{
 		// Delay to transition into Idle state
 		SearchDelay(SearchDelayAmount);
@@ -195,6 +201,12 @@ void AGOClownCharacter::HandleSearchState()
 	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
 }
 
+void AGOClownCharacter::HandleRetreatState()
+{
+	SetCharacterSpeed(RetreatMovementSpeed);
+	ClownAIController->MoveToRetreatPoint(RetreatPoint);
+}
+
 void AGOClownCharacter::HandleJumpscareState()
 {
 	// TODO
@@ -202,6 +214,18 @@ void AGOClownCharacter::HandleJumpscareState()
 	// Play jumpscare sound
 	// End game
 	JumpscarePlayer();
+}
+
+
+void AGOClownCharacter::SetToRetreatState(FVector NewRetreatLocation)
+{
+	RetreatPoint = NewRetreatLocation;
+	ClownState = EClownState::ECS_Retreat;
+}
+
+bool AGOClownCharacter::HasFinishedRetreating()
+{
+	return ClownAIController->HasReachedLocation(RetreatPoint, DistanceThreshold);
 }
 
 void AGOClownCharacter::SetCharacterSpeed(float Speed)

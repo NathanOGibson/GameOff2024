@@ -257,14 +257,6 @@ void AGOClownAIController::ResetPatrolSettings()
 	}
 }
 
-bool AGOClownAIController::HasReachedPatrolPoint(float ReachThreshold)
-{
-	float DistanceToPatrolPoint = FVector::Dist(CharacterLocation, PatrolPoint);
-
-	// Check if the distance is within a defined threshold
-	return DistanceToPatrolPoint <= ReachThreshold;
-}
-
 void AGOClownAIController::ChasePlayer()
 {
 	if (!Player || !GetPawn()) return;
@@ -284,6 +276,9 @@ void AGOClownAIController::ChasePlayer()
 FVector AGOClownAIController::GetSearchPoint()
 {
 	if (!Player) return FVector::ZeroVector;
+
+	UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, Player->GetActorLocation());
+	if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0) return FVector::ZeroVector;
 
 	SearchPoint = Player->GetActorLocation();
 	return SearchPoint;
@@ -306,10 +301,24 @@ void AGOClownAIController::MoveToSearchPoint()
 	MoveToLocation(SearchPoint);
 }
 
-bool AGOClownAIController::HasReachedSearchPoint(float ReachThreshold)
+void AGOClownAIController::MoveToRetreatPoint(FVector NewLocation)
 {
-	float DistanceToSearchPoint = FVector::Dist(CharacterLocation, SearchPoint);
-	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, FString::Printf(TEXT("Distance to search point: %f"), DistanceToSearchPoint));
-	// Check if the distance is within a defined threshold
-	return DistanceToSearchPoint <= ReachThreshold;
+	RetreatPoint = NewLocation;
+	// Get the direction from the AI to the search point
+	FVector DirectionToRetreatPoint = (NewLocation - CharacterLocation).GetSafeNormal();
+
+	// Calculate and smoothly interpolate the AI's rotation to face the search point
+	FRotator TargetRotation = DirectionToRetreatPoint.Rotation();
+	FRotator SmoothedRotation = FMath::RInterpTo(CharacterRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), RotationSpeed);
+	GetPawn()->SetActorRotation(SmoothedRotation);
+
+	// Draw a debug sphere at the search point and move the AI toward it
+	//DrawDebugSphere(GetWorld(), SearchPoint, 50.f, 8, FColor::Red, false, 0.f);
+	MoveToLocation(NewLocation);
+}
+
+bool AGOClownAIController::HasReachedLocation(FVector NewLocation, float ReachThreshold)
+{
+	float DistanceToNewLocation = FVector::Dist(CharacterLocation, NewLocation);
+	return DistanceToNewLocation <= ReachThreshold;
 }

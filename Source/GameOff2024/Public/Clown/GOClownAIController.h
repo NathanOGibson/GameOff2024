@@ -38,15 +38,22 @@ public:
 	FVector GetPatrolPoint();
 	void MoveToPatrolPoint();
 	void ResetPatrolSettings();
-	bool HasReachedPatrolPoint(float ReachThreshold);
 
-	/** Chase functions */
+	/** Chase function */
 	void ChasePlayer();
 
 	/** Search functions */
 	FVector GetSearchPoint();
 	void MoveToSearchPoint();
-	bool HasReachedSearchPoint(float ReachThreshold);
+
+	/** Retreat function */
+	void MoveToRetreatPoint(FVector NewLocation);
+
+	/** state check */
+	bool HasReachedLocation(FVector NewLocation, float ReachThreshold);
+
+
+
 
 private:
 	/* Character current location and rotation variables **/
@@ -68,8 +75,11 @@ private:
 	float CachedDistance = 1000.0f;
 	float MaxPatrolAngle = 30.0f;
 
-	/** Search variables */
+	/** Search variable */
 	FVector SearchPoint;
+
+	/** Search variable */
+	FVector RetreatPoint;
 
 	/** Movement variable */
 	float RotationSpeed = 4.f;
