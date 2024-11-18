@@ -39,8 +39,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TArray<TObjectPtr<UStaticMeshComponent>> TicketMeshes;
 
-	/** Setup sign and billboard components */
-	void CreateSignMeshesAndBillboards();
+	/** Setup ticket and billboard components */
+	void CreateTicketMeshesAndBillboards();
 
 public:
 	virtual void Tick(float DeltaTime) override;

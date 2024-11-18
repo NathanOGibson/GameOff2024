@@ -71,9 +71,8 @@ private:
 	AActor* Player;
 
 	/** Is the clown active? */
+	UPROPERTY(VisibleAnywhere, Category = "Clown Behavior")
 	bool bAIActive = false;
-	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
-	bool bChangeAIState = false;
 
 	/** Current AI state of the clown */
 	UPROPERTY(VisibleAnywhere, Category = "Clown Behavior")
@@ -132,6 +131,12 @@ private:
 	/** Distance threshold */
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float DistanceThreshold = 100.f;
+
+	/* Set AI controller inactive/active **/
+	UFUNCTION(BlueprintCallable, Category = "Clown AI Controller")
+	void SetControllerInactive();
+	UFUNCTION(BlueprintCallable, Category = "Clown AI Controller")
+	void SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation);
 
 	/* Adjust character speed functions **/
 	void SetCharacterSpeed(float Speed);

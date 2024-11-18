@@ -20,10 +20,10 @@ AGOBooth::AGOBooth()
 	BoothMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoothMesh"));
 	BoothMesh->SetupAttachment(RootComponent);
 
-	CreateSignMeshesAndBillboards();
+	CreateTicketMeshesAndBillboards();
 }
 
-void AGOBooth::CreateSignMeshesAndBillboards()
+void AGOBooth::CreateTicketMeshesAndBillboards()
 {
 	// Create the sign meshes and billboards
 	for (int32 i = 0; i < 5; i++)

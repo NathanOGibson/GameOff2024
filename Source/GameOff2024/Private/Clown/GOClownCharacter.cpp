@@ -34,23 +34,6 @@ void AGOClownCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bChangeAIState)
-	{
-		if (!bAIActive)
-		{
-			ClownAIController->SetActive(FVector(2836.4243f, 14256.979617f, -5179.976316f), FRotator(0.0f, 0.0f, 0.0f));
-			bAIActive = true;
-		}
-		else
-		{
-			ClownState = EClownState::ECS_Idle;
-			ClownAIController->SetInactive();
-			bAIActive = false;
-		}
-		bChangeAIState = false;
-
-	}
-
 	if (!bAIActive) return;
 
 	switch (ClownState)
@@ -83,6 +66,20 @@ void AGOClownCharacter::Tick(float DeltaTime)
 		HandleJumpscareState();
 		break;
 	}
+}
+
+void AGOClownCharacter::SetControllerInactive()
+{
+	ClownAIController->SetInactive();
+	ClownState = EClownState::ECS_Idle;
+	bAIActive = false;
+}
+
+void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
+{
+	ClownAIController->SetActive(NewCharacterLocation, NewCharacterRotation);
+	ClownState = EClownState::ECS_GetSearchPoint;
+	bAIActive = true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -285,7 +282,6 @@ bool AGOClownCharacter::IsPlayerWithinDetectionAngle(FVector PlayerLocation)
 
 	if (AngleDegrees > DetectionAngle / 2.0f)
 	{
-		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Green, TEXT("Outside detection angle"));
 		return false;
 	}
 
