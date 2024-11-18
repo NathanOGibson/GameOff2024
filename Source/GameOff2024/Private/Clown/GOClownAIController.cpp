@@ -10,6 +10,7 @@
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "Clown/Patrol/GOPatrolPoint.h"
+#include "BehaviorTree/BehaviorTreeComponent.h"
 AGOClownAIController::AGOClownAIController()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,6 +32,54 @@ void AGOClownAIController::Tick(float DeltaTime)
 	CharacterRotation = GetPawn()->GetActorRotation();
 }
 
+void AGOClownAIController::SetInactive()
+{
+	// Update position
+	if (GetPawn())
+	{
+		GetPawn()->SetActorLocation(FVector::ZeroVector);
+	}
+
+	// Pause AI logic
+	if (BrainComponent)
+	{
+		BrainComponent->PauseLogic(TEXT("AI set to inactive"));
+	}
+
+	// Stop any ongoing movement
+	StopMovement();
+
+	// Clear current AI tasks to ensure no lingering behavior
+	if (UBehaviorTreeComponent* BTComponent = Cast<UBehaviorTreeComponent>(BrainComponent))
+	{
+		BTComponent->StopTree(EBTStopMode::Safe); // Safely stops the current behavior tree
+	}
+
+	// Resets patrol point logic
+	GOPatrolPoints.Empty();
+	ResetPatrolSettings();
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("AI set to inactive"));
+}
+
+void AGOClownAIController::SetActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
+{
+	// Update position and rotation
+	if (GetPawn())
+	{
+		GetPawn()->SetActorLocation(NewCharacterLocation);
+		GetPawn()->SetActorRotation(NewCharacterRotation);
+	}
+
+	// Reset AI tasks and resume logic
+	if (UBehaviorTreeComponent* BTComponent = Cast<UBehaviorTreeComponent>(BrainComponent))
+	{
+		BTComponent->RestartTree(); // Restarts the behavior tree cleanly
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("AI set to active"));
+}
+
 void AGOClownAIController::InitialiseGOPatrolPointReferences()
 {
 	// Array to hold all actors of class AGOPatrolPoint found in the world
@@ -50,38 +99,16 @@ void AGOClownAIController::InitialiseGOPatrolPointReferences()
 	GOPatrolPoints = GOStoredPatrolPoints;
 }
 
-void AGOClownAIController::TempFunc()
-{
-	/*
-	// Calculate a random patrol direction based on the forward vector and a random angle
-	FVector PatrolDirection = FRotator(0, FMath::RandRange(-MaxPatrolAngle, MaxPatrolAngle), 0).RotateVector(CharacterRotation.Vector());
-
-	// Determine the target patrol point
-	FVector TargetPatrolPoint = CharacterLocation + PatrolDirection * PatrolDistance;
-
-	DrawDebugSphere(GetWorld(), TargetPatrolPoint, 8.f, 8.f, FColor::Red, false, 1000.f);
-
-	// Find a path to the patrol point within the navigation mesh
-	UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, TargetPatrolPoint);
-	if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0) return FVector::ZeroVector;
-
-	SplinePath->ClearSplinePoints();
-
-	for (const FVector& PathPoint : NavPath->PathPoints)
-	{
-		SplinePath->AddSplinePoint(PathPoint, ESplineCoordinateSpace::World);
-		//DrawDebugSphere(GetWorld(), PathPoint, 8.f, 8.f, FColor::Green, false, 5.f);
-	}
-
-	// Set the final patrol point to the last valid point in the path
-	PatrolPoint = NavPath->PathPoints.Last();
-	FirstPathPoint = NavPath->PathPoints[1];
-
-	return PatrolPoint;*/
-}
 
 FVector AGOClownAIController::GetPatrolPoint()
 {
+	// Return early if there are no patrol points
+	if (GOPatrolPoints.Num() == 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("No patrol points available"));
+		return FVector::ZeroVector;
+	}
+
 	// Define variables for patrol point selection
 	AGOPatrolPoint* SelectedPatrolPoint = nullptr;
 	FVector BestPatrolPoint = FVector::ZeroVector;
@@ -106,13 +133,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 		}
 	}
 
-	// Return early if there are no patrol points
-	if (GOPatrolPoints.Num() == 0)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("No patrol points available"));
-		return FVector::ZeroVector;
-	}
-
 	// Loop through all preplaced patrol points
 	for (AGOPatrolPoint* GOPatrolPoint : GOPatrolPoints)
 	{
@@ -120,13 +140,13 @@ FVector AGOClownAIController::GetPatrolPoint()
 		float DistanceToPatrolPoint = FVector::Dist(CharacterLocation, PatrolPointLocation);
 
 		// Skip points outside the maximum patrol distance
-		if (DistanceToPatrolPoint > PatrolDistance)
-			continue;
+		if (DistanceToPatrolPoint > PatrolDistance) continue;
+
 
 		// Find a path to the patrol point using the navigation system
 		UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, PatrolPointLocation);
-		if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0)
-			continue;
+		if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0) continue;
+
 
 		// Update the best patrol point if this one is farther and no cached point exists
 		if (DistanceToPatrolPoint > BestDistance && !bHasCached)
@@ -221,15 +241,10 @@ void AGOClownAIController::MoveToPatrolPoint()
 	}
 }
 
-void AGOClownAIController::AdjustPatrolSettings()
-{
-	/*MaxPatrolAngle += 10.f;
-	if (PatrolDistance > 400.f) PatrolDistance -= 100.f;*/
-}
-
 void AGOClownAIController::ResetPatrolSettings()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Resetting"));
+	PatrolPoint = FVector::ZeroVector;
 	bHasCached = false;
 	CachedGOPatrolPoint = nullptr;
 	if (GOPatrolPoints.Num() == 0)

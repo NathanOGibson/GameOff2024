@@ -59,12 +59,21 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Player Movement")
 	bool CheckPlayerIsSprinting();
 
+	/* Jumpscare functionality in blueprints **/
+	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Jumpscare")
+	void JumpscarePlayer();
+
 private:
 	/** AI Controller for the clown */
 	AGOClownAIController* ClownAIController;
 
 	/** Player reference */
 	AActor* Player;
+
+	/** Is the clown active? */
+	bool bAIActive = false;
+	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
+	bool bChangeAIState = false;
 
 	/** Current AI state of the clown */
 	UPROPERTY(VisibleAnywhere, Category = "Clown Behavior")
@@ -136,6 +145,7 @@ private:
 	bool IsPlayerWithinAgroRange(float DistanceToPlayer);
 	bool IsPlayerInLineOfSight(FVector PlayerLocation, FVector ClownLocation);
 	void AdjustClownDetectionBasedOnPlayerMovement();
+	bool IsPlayerWithinJumpscareRange();
 
 	/** State functions */
 	void HandleIdleState();

@@ -29,10 +29,14 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+	/** Handle setting AI active/inactive */
+	void SetInactive();
+	void SetActive(FVector NewCharacterLocation, FRotator NewCharacterRotation);
+
 	/** Patrol functions */
+	void InitialiseGOPatrolPointReferences();
 	FVector GetPatrolPoint();
 	void MoveToPatrolPoint();
-	void AdjustPatrolSettings();
 	void ResetPatrolSettings();
 	bool HasReachedPatrolPoint(float ReachThreshold);
 
@@ -45,22 +49,6 @@ public:
 	bool HasReachedSearchPoint(float ReachThreshold);
 
 private:
-	/////////////////////////////////////////////////////////////
-
-	void TempFunc();
-
-	void InitialiseGOPatrolPointReferences();
-
-
-	TArray<AGOPatrolPoint*> GOStoredPatrolPoints;
-	TArray<AGOPatrolPoint*> GOPatrolPoints;
-
-	AGOPatrolPoint* CachedGOPatrolPoint;
-	bool bHasCached = false;
-
-	/////////////////////////////////////////////////////////////
-
-
 	/* Character current location and rotation variables **/
 	FVector CharacterLocation;
 	FRotator CharacterRotation;
@@ -70,6 +58,10 @@ private:
 	TObjectPtr<USplineComponent> SplinePath;
 
 	/** Patrol variables */
+	TArray<AGOPatrolPoint*> GOStoredPatrolPoints;
+	TArray<AGOPatrolPoint*> GOPatrolPoints;
+	AGOPatrolPoint* CachedGOPatrolPoint;
+	bool bHasCached = false;
 	FVector FirstPathPoint;
 	FVector PatrolPoint;
 	float PatrolDistance = 1000.0f;

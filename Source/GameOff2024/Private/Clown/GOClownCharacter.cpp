@@ -22,15 +22,36 @@ void AGOClownCharacter::BeginPlay()
 
 	ClownAIController = Cast<AGOClownAIController>(GetController());
 	Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+
 	ClownAIController->SetPatrolDistance(PatrolDistance);
 	ClownAIController->SetCachedDistance(CachedDistance);
+
+	ClownAIController->SetInactive();
+	bAIActive = false;
 }
 
 void AGOClownCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// SWITCH FOR SETTING SPEED
+	if (bChangeAIState)
+	{
+		if (!bAIActive)
+		{
+			ClownAIController->SetActive(FVector(2836.4243f, 14256.979617f, -5179.976316f), FRotator(0.0f, 0.0f, 0.0f));
+			bAIActive = true;
+		}
+		else
+		{
+			ClownState = EClownState::ECS_Idle;
+			ClownAIController->SetInactive();
+			bAIActive = false;
+		}
+		bChangeAIState = false;
+
+	}
+
+	if (!bAIActive) return;
 
 	switch (ClownState)
 	{
@@ -132,6 +153,9 @@ void AGOClownCharacter::HandlePatrolState()
 
 void AGOClownCharacter::HandleChaseState()
 {
+	// Transition to Jumpscare State if player is within jumpscare range
+	if (IsPlayerWithinJumpscareRange()) ClownState = EClownState::ECS_Jumpscare;
+
 	// Set movement speed to chase movement speed
 	SetCharacterSpeed(ChaseMovementSpeed);
 
@@ -180,6 +204,7 @@ void AGOClownCharacter::HandleJumpscareState()
 	// Play jumpscare animation
 	// Play jumpscare sound
 	// End game
+	JumpscarePlayer();
 }
 
 void AGOClownCharacter::SetCharacterSpeed(float Speed)
@@ -207,9 +232,9 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 
 	if (!IsPlayerWithinDetectionRange(DistanceToPlayer)) return false;
 
-	if (!IsPlayerWithinDetectionAngle(PlayerLocation)) return false;
-
 	if (IsPlayerWithinAgroRange(DistanceToPlayer)) return true;
+
+	if (!IsPlayerWithinDetectionAngle(PlayerLocation)) return false;
 
 	if (IsPlayerInLineOfSight(PlayerLocation, ClownLocation))
 	{
@@ -272,7 +297,6 @@ bool AGOClownCharacter::IsPlayerWithinAgroRange(float DistanceToPlayer)
 	if (DistanceToPlayer <= DetectionAgroRange)
 	{
 		ClownDetection = DetectionThreshold;
-		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("AGRO"));
 		return true;
 	}
 
@@ -301,21 +325,35 @@ void AGOClownCharacter::AdjustClownDetectionBasedOnPlayerMovement()
 	if (!CheckPlayerIsMoving())
 	{
 		AdjustClownDetection(DetectionNotWalkingIncreaseRate);
-		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("NOT WALKING"));
 	}
 	else if (CheckPlayerIsCrouching())
 	{
 		AdjustClownDetection(DetectionCrouchingIncreaseRate);
-		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("CROUCHING"));
 	}
 	else if (CheckPlayerIsSprinting())
 	{
 		AdjustClownDetection(DetectionSprintingIncreaseRate);
-		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("SPRINTING"));
 	}
 	else
 	{
 		AdjustClownDetection(DetectionWalkingIncreaseRate);
-		//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::Red, TEXT("WALKING"));
 	}
+}
+
+bool AGOClownCharacter::IsPlayerWithinJumpscareRange()
+{
+	if (!Player || !ClownAIController) return false;
+
+	// Get locations and calculate distance
+	const FVector PlayerLocation = Player->GetActorLocation();
+	const FVector ClownLocation = GetActorLocation();
+	const float DistanceToPlayer = FVector::Dist(ClownLocation, PlayerLocation);
+
+	if (DistanceToPlayer <= JumpscareRange)
+	{
+		ClownDetection = DetectionThreshold;
+		return true;
+	}
+
+	return false;
 }
