@@ -13,6 +13,7 @@ enum class EClownState : uint8
 	ECS_GetPatrolPoint UMETA(DisplayName = "Get Patrol Point"),
 	ECS_Patrol UMETA(DisplayName = "Patrot"),
 	ECS_Chase UMETA(DisplayName = "Chase"),
+	ECS_Activated UMETA(DisplayName = "Activeated"),
 	ECS_GetSearchPoint UMETA(DisplayName = "Get Search Point"),
 	ECS_Search UMETA(DisplayName = "Search"),
 	ECS_Retreat UMETA(DisplayName = "Retreat"),
@@ -36,12 +37,6 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	////////////////////////////////////////////////
-
-	void TODO_FUNCTIONS();
-
-	////////////////////////////////////////////////
-
 	/* Delay functions implemented in blueprints **/
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void IdleDelay(float DelayAmount);
@@ -49,6 +44,8 @@ public:
 	void PatrolDelay(float DelayAmount);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void ChaseDelay(float DelayAmount);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
+	void ActiveatedDelay(float DelayAmount);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void SearchDelay(float DelayAmount);
 
@@ -86,6 +83,8 @@ private:
 	float PatrolDelayAmount = 1.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Delay")
 	float ChaseDelayAmount = 5.f;
+	UPROPERTY(EditAnywhere, Category = "Clown Delay")
+	float ActiveatedDelayAmount = 10.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Delay")
 	float SearchDelayAmount = 8.f;
 
@@ -126,6 +125,8 @@ private:
 	float PatrolMovementSpeed = 200.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float ChaseMovementSpeed = 400.f;
+	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
+	float ActiveatedMovementSpeed = 400.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
 	float SearchMovementSpeed = 300.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Behavior")
@@ -171,6 +172,7 @@ private:
 	void HandleGetPatrolPointState();
 	void HandlePatrolState();
 	void HandleChaseState();
+	void HandleActiveatedState();
 	void HandlGetSearchPointState();
 	void HandleSearchState();
 	void HandleRetreatState();
@@ -180,6 +182,10 @@ public:
 	/** Set the AI's state */
 	UFUNCTION(BlueprintCallable, Category = "ClownState")
 	FORCEINLINE void SetClownState(EClownState NewClownState) { ClownState = NewClownState; }
+
+	/** Get the AI's state */
+	UFUNCTION(BlueprintCallable, Category = "ClownState")
+	FORCEINLINE EClownState GetClownState() { return ClownState; }
 
 	/** Get the player reference */
 	UFUNCTION(BlueprintCallable, Category = "Player Movement")

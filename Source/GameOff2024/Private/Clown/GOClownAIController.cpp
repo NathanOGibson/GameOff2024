@@ -59,7 +59,7 @@ void AGOClownAIController::SetInactive()
 	GOPatrolPoints.Empty();
 	ResetPatrolSettings();
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("AI set to inactive"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, TEXT("AI set to inactive"));
 }
 
 void AGOClownAIController::SetActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
@@ -77,7 +77,7 @@ void AGOClownAIController::SetActive(FVector NewCharacterLocation, FRotator NewC
 		BTComponent->RestartTree(); // Restarts the behavior tree cleanly
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("AI set to active"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("AI set to active"));
 }
 
 void AGOClownAIController::InitialiseGOPatrolPointReferences()
@@ -105,7 +105,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 	// Return early if there are no patrol points
 	if (GOPatrolPoints.Num() == 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("No patrol points available"));
 		return FVector::ZeroVector;
 	}
 
@@ -121,8 +120,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 	// Check if a cached patrol point exists
 	if (CachedGOPatrolPoint != nullptr)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Using cached patrol point"));
-
 		// Find a path to the cached patrol point
 		BestNavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, CachedGOPatrolPoint->GetActorLocation());
 		if (BestNavPath && BestNavPath->IsValid() && BestNavPath->PathPoints.Num() > 0)
@@ -151,8 +148,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 		// Update the best patrol point if this one is farther and no cached point exists
 		if (DistanceToPatrolPoint > BestDistance && !bHasCached)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Selecting default patrol point"));
-
 			BestDistance = DistanceToPatrolPoint;
 			BestPatrolPoint = PatrolPointLocation;
 			BestNavPath = NavPath;
@@ -168,8 +163,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 				if (DistanceBetweenCachedPoints < CachedDistance) continue;
 			}
 
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Blue, TEXT("Caching patrol point"));
-
 			CachedGOPatrolPoint = GOPatrolPoint;
 			CachedGOPatrolPoint->SetMaterialToCached();
 			CachedThisLoop = true;
@@ -177,11 +170,7 @@ FVector AGOClownAIController::GetPatrolPoint()
 	}
 
 	// Handle the case where no valid path was found
-	if (!BestNavPath)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("No valid path found"));
-		return FVector::ZeroVector;
-	}
+	if (!BestNavPath) return FVector::ZeroVector;
 
 	// Clear the cached patrol point if it matches the selected one
 	if (SelectedPatrolPoint == CachedGOPatrolPoint)
@@ -194,7 +183,6 @@ FVector AGOClownAIController::GetPatrolPoint()
 	{
 		GOPatrolPoints.Remove(SelectedPatrolPoint);
 		SelectedPatrolPoint->SetMaterialToDisabled();
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, FString::Printf(TEXT("GOPatrolPoints: %d"), GOPatrolPoints.Num()));
 	}
 
 	// Clear and populate the spline path
@@ -243,7 +231,6 @@ void AGOClownAIController::MoveToPatrolPoint()
 
 void AGOClownAIController::ResetPatrolSettings()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Green, TEXT("Resetting"));
 	PatrolPoint = FVector::ZeroVector;
 	bHasCached = false;
 	CachedGOPatrolPoint = nullptr;

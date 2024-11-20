@@ -78,7 +78,7 @@ private:
 	/** Search variable */
 	FVector SearchPoint;
 
-	/** Search variable */
+	/** Retreat variable */
 	FVector RetreatPoint;
 
 	/** Movement variable */

@@ -112,8 +112,7 @@ void AGOPropController::ClearPropData()
 	ChildrenSpawnLocations.Empty(); // Clears the spawn locations array if you want to reset that too
 
 	// Add any additional variables or arrays to clear/reset here as needed
-
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Prop data cleared"));
+	// ->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Prop data cleared"));
 }
 
 void AGOPropController::InitialiseSpawnLocations()
@@ -362,6 +361,5 @@ void AGOPropController::ResetInaccessibleProps()
 
 bool AGOPropController::PropsCollected()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 0.f, FColor::Yellow, FString::Printf(TEXT("IAProps: %d, PropToChoose: %d"), InaccessibleProps.Num(), PropsToChoose));
 	return InaccessibleProps.Num() == PropsToChoose;
 }

@@ -54,6 +54,10 @@ void AGOClownCharacter::Tick(float DeltaTime)
 		HandleChaseState();
 		break;
 
+	case EClownState::ECS_Activated:
+		HandleActiveatedState();
+		break;
+
 	case EClownState::ECS_GetSearchPoint:
 		HandlGetSearchPointState();
 		break;
@@ -82,19 +86,10 @@ void AGOClownCharacter::SetControllerInactive()
 void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
 {
 	ClownAIController->SetActive(NewCharacterLocation, NewCharacterRotation);
-	ClownState = EClownState::ECS_Chase;
+	ClownState = EClownState::ECS_Activated;
 	bAIActive = true;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-void AGOClownCharacter::TODO_FUNCTIONS()
-{
-	// Retreat function
-
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// STATE FUNCTIONS
 void AGOClownCharacter::HandleIdleState()
 {
 	// Delay to transition into get patrol point state
@@ -164,11 +159,25 @@ void AGOClownCharacter::HandleChaseState()
 	// Chase the player
 	ClownAIController->ChasePlayer();
 
-	// Transition to Chase State if player detected
 	if (!CheckPlayerWithinDetectionRange()) ChaseDelay(ChaseDelayAmount);
+}
 
-	// Check if player inside jumpscare range (JUMPSCARE)
-	// TODO
+void AGOClownCharacter::HandleActiveatedState()
+{
+	// Transition to Jumpscare State if player is within jumpscare range
+	if (IsPlayerWithinJumpscareRange()) ClownState = EClownState::ECS_Jumpscare;
+
+	// Transition to Chase State if player detected
+	if (CheckPlayerWithinDetectionRange()) ClownState = EClownState::ECS_Chase;
+
+	// Set movement speed to chase movement speed
+	SetCharacterSpeed(ActiveatedMovementSpeed);
+
+	// Chase the player
+	ClownAIController->ChasePlayer();
+
+	// Transition to Chase State if player detected
+	ActiveatedDelay(ActiveatedDelayAmount);
 }
 
 void AGOClownCharacter::HandlGetSearchPointState()
@@ -249,7 +258,7 @@ bool AGOClownCharacter::CheckPlayerWithinDetectionRange()
 	AdjustClownDetection(DetectionDecayRate);
 
 	// Draw detection range
-	DebugDetectionRange();
+	//DebugDetectionRange();
 
 	if (!IsPlayerWithinDetectionRange(DistanceToPlayer)) return false;
 
@@ -333,7 +342,7 @@ bool AGOClownCharacter::IsPlayerInLineOfSight(FVector PlayerLocation, FVector Cl
 
 	if (GetWorld()->LineTraceSingleByChannel(HitResult, ClownLocation, EndLocation, ECC_Visibility, CollisionParams))
 	{
-		DrawDebugLine(GetWorld(), ClownLocation, EndLocation, FColor::Red, false, 1.0f, 0, 2.0f);
+		//DrawDebugLine(GetWorld(), ClownLocation, EndLocation, FColor::Red, false, 1.0f, 0, 2.0f);
 		return HitResult.GetActor() == Player;
 	}
 
