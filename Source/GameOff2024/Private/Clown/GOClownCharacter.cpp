@@ -82,7 +82,7 @@ void AGOClownCharacter::SetControllerInactive()
 void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
 {
 	ClownAIController->SetActive(NewCharacterLocation, NewCharacterRotation);
-	ClownState = EClownState::ECS_GetSearchPoint;
+	ClownState = EClownState::ECS_Chase;
 	bAIActive = true;
 }
 
