@@ -218,10 +218,6 @@ void AGOClownCharacter::HandleRetreatState()
 
 void AGOClownCharacter::HandleJumpscareState()
 {
-	// TODO
-	// Play jumpscare animation
-	// Play jumpscare sound
-	// End game
 	JumpscarePlayer();
 }
 
