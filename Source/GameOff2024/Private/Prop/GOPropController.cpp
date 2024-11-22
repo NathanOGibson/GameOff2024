@@ -58,6 +58,7 @@ void AGOPropController::InitialisePropReferences()
 	{
 		AGOProp* Prop = Cast<AGOProp>(Actor);
 		if (Prop) AllProps.Add(Prop);  // Add valid props to the array
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Prop added: %s"), *Prop->GetName()));
 	}
 }
 
@@ -354,6 +355,7 @@ void AGOPropController::ResetInaccessibleProps()
 {
 	for (AGOProp* Prop : InaccessibleProps)
 	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Prop added: %s"), *Prop->GetName()));
 		Prop->SetPropCanBePickedUp(true);
 	}
 	InaccessibleProps.Empty();
