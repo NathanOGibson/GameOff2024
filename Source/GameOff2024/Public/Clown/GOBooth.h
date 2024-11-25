@@ -28,6 +28,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Prop Controller")
 	void InitialiseReferences();
 
+	/** Ticket components */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Mesh")
+	TArray<TObjectPtr<UStaticMeshComponent>> TicketMeshes;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -36,8 +40,6 @@ private:
 	TObjectPtr<USceneComponent> BoothSceneComponent;
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 	TObjectPtr<UStaticMeshComponent> BoothMesh;
-	UPROPERTY(EditAnywhere, Category = "Mesh")
-	TArray<TObjectPtr<UStaticMeshComponent>> TicketMeshes;
 
 	/** Setup ticket and billboard components */
 	void CreateTicketMeshesAndBillboards();

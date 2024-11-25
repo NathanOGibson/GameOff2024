@@ -92,6 +92,10 @@ void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotat
 
 void AGOClownCharacter::HandleIdleState()
 {
+	// Set movement speed to idle movement speed
+	SetCharacterSpeed(0.f);
+
+
 	// Delay to transition into get patrol point state
 	IdleDelay(IdleDelayAmount);
 
@@ -128,9 +132,6 @@ void AGOClownCharacter::HandlePatrolState()
 {
 	// Set movement speed to patrol movement speed
 	SetCharacterSpeed(PatrolMovementSpeed);
-
-	// Reset patrol settings
-	//ClownAIController->ResetPatrolSettings();
 
 	// Check if patrol point reached
 		//if (ClownAIController->HasReachedPatrolPoint(DistanceThreshold))

@@ -90,4 +90,8 @@ public:
 	/** Assign amount of Props to choose and spawn */
 	UFUNCTION(BlueprintCallable, Category = "PropController")
 	FORCEINLINE void SetPropsToChooseAndSpawn(int32 NewPropsToChoose, int32 NewPropsToSpawn) { PropsToChoose = NewPropsToChoose; PropsToSpawn = NewPropsToSpawn; }
+
+	/** Returns inaccessible props so that they can be reset */
+	UFUNCTION(BlueprintCallable, Category = "PropController")
+	FORCEINLINE TArray<AGOProp*> GetInaccessibleProps() { return InaccessibleProps; }
 };
