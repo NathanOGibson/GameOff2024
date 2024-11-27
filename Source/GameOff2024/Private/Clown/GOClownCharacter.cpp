@@ -13,7 +13,7 @@ AGOClownCharacter::AGOClownCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Initial state is patrol
-	ClownState = EClownState::ECS_Idle;
+	ClownState = EClownState::ECS_Activated;
 }
 
 void AGOClownCharacter::BeginPlay()
@@ -86,7 +86,7 @@ void AGOClownCharacter::SetControllerInactive()
 void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
 {
 	ClownAIController->SetActive(NewCharacterLocation, NewCharacterRotation);
-	ClownState = EClownState::ECS_GetSearchPoint;
+	ClownState = EClownState::ECS_Chase;
 	bAIActive = true;
 }
 

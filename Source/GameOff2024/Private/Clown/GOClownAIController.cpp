@@ -249,8 +249,6 @@ void AGOClownAIController::ChasePlayer()
 {
 	if (!Player || !GetPawn()) return;
 
-	MoveToSplinePoints();
-
 	// Calculate direction to the player and the desired rotation
 	const FVector DirectionToPlayer = (Player->GetActorLocation() - CharacterLocation).GetSafeNormal();
 	const FRotator TargetRotation = DirectionToPlayer.Rotation();
