@@ -137,8 +137,7 @@ void AGOClownCharacter::HandlePatrolState()
 		//if (ClownAIController->HasReachedPatrolPoint(DistanceThreshold))
 	if (ClownAIController->HasReachedLocation(PatrolPoint, DistanceThreshold))
 	{
-		// Delay to transition into patrol state
-		PatrolDelay(PatrolDelayAmount);
+		ClownState = EClownState::ECS_Idle;
 	}
 	else
 	{
@@ -200,8 +199,7 @@ void AGOClownCharacter::HandleSearchState()
 		//if (ClownAIController->HasReachedSearchPoint(DistanceThreshold))
 	if (ClownAIController->HasReachedLocation(SearchPoint, DistanceThreshold))
 	{
-		// Delay to transition into Idle state
-		SearchDelay(SearchDelayAmount);
+		ClownState = EClownState::ECS_Idle;
 	}
 	else
 	{

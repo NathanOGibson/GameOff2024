@@ -41,13 +41,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void IdleDelay(float DelayAmount);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
-	void PatrolDelay(float DelayAmount);
-	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void ChaseDelay(float DelayAmount);
 	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
 	void ActiveatedDelay(float DelayAmount);
-	UFUNCTION(BlueprintImplementableEvent, Category = "Clown Delay")
-	void SearchDelay(float DelayAmount);
 
 	/* Player movement checks implemented in blueprints **/
 	UFUNCTION(BlueprintImplementableEvent, Category = "Player Movement")
@@ -80,13 +76,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Clown Delay")
 	float IdleDelayAmount = 5.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Delay")
-	float PatrolDelayAmount = 1.f;
-	UPROPERTY(EditAnywhere, Category = "Clown Delay")
 	float ChaseDelayAmount = 5.f;
 	UPROPERTY(EditAnywhere, Category = "Clown Delay")
 	float ActiveatedDelayAmount = 10.f;
-	UPROPERTY(EditAnywhere, Category = "Clown Delay")
-	float SearchDelayAmount = 8.f;
 
 	/** Detection state properties */
 	UPROPERTY(VisibleAnywhere, Category = "Clown Detection")
