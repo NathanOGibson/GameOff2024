@@ -202,9 +202,9 @@ FVector AGOClownAIController::GetPatrolPoint()
 	return PatrolPoint;
 }
 
-void AGOClownAIController::MoveToPatrolPoint()
+void AGOClownAIController::MoveToSplinePoints()
 {
-	if (PatrolPoint.IsZero() || SplinePath->GetNumberOfSplinePoints() <= 1) return;
+	if (SplinePath->GetNumberOfSplinePoints() <= 1) return;
 
 	// Get the current patrol point from the spline
 	FVector NextPathPoint = SplinePath->GetLocationAtSplinePoint(CurrentSplinePatrolIndex, ESplineCoordinateSpace::World);
@@ -229,6 +229,7 @@ void AGOClownAIController::MoveToPatrolPoint()
 	}
 }
 
+
 void AGOClownAIController::ResetPatrolSettings()
 {
 	PatrolPoint = FVector::ZeroVector;
@@ -248,6 +249,8 @@ void AGOClownAIController::ChasePlayer()
 {
 	if (!Player || !GetPawn()) return;
 
+	MoveToSplinePoints();
+
 	// Calculate direction to the player and the desired rotation
 	const FVector DirectionToPlayer = (Player->GetActorLocation() - CharacterLocation).GetSafeNormal();
 	const FRotator TargetRotation = DirectionToPlayer.Rotation();
@@ -264,28 +267,26 @@ FVector AGOClownAIController::GetSearchPoint()
 {
 	if (!Player) return FVector::ZeroVector;
 
+	DrawDebugSphere(GetWorld(), CharacterLocation, 500.f, 8, FColor::Yellow, false, 100.f);
+
 	UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, Player->GetActorLocation());
-	if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0) return FVector::ZeroVector;
+	if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0)
+	{
+		return FVector::ZeroVector;
+	}
+	else
+	{
+		SearchPoint = NavPath->PathPoints.Last();
+	}
 
-	SearchPoint = Player->GetActorLocation();
+	SplinePath->ClearSplinePoints();
+	for (const FVector& PathPoint : NavPath->PathPoints)
+	{
+		DrawDebugSphere(GetWorld(), PathPoint, 50.f, 8, FColor::Red, false, 100.f);
+		SplinePath->AddSplinePoint(PathPoint, ESplineCoordinateSpace::World);
+	}
+
 	return SearchPoint;
-}
-
-void AGOClownAIController::MoveToSearchPoint()
-{
-	if (SearchPoint.IsZero()) return;
-
-	// Get the direction from the AI to the search point
-	FVector DirectionToSearchPoint = (SearchPoint - CharacterLocation).GetSafeNormal();
-
-	// Calculate and smoothly interpolate the AI's rotation to face the search point
-	FRotator TargetRotation = DirectionToSearchPoint.Rotation();
-	FRotator SmoothedRotation = FMath::RInterpTo(CharacterRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), RotationSpeed);
-	GetPawn()->SetActorRotation(SmoothedRotation);
-
-	// Draw a debug sphere at the search point and move the AI toward it
-	//DrawDebugSphere(GetWorld(), SearchPoint, 50.f, 8, FColor::Red, false, 0.f);
-	MoveToLocation(SearchPoint);
 }
 
 void AGOClownAIController::MoveToRetreatPoint(FVector NewLocation)

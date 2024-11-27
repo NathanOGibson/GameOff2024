@@ -36,7 +36,6 @@ public:
 	/** Patrol functions */
 	void InitialiseGOPatrolPointReferences();
 	FVector GetPatrolPoint();
-	void MoveToPatrolPoint();
 	void ResetPatrolSettings();
 
 	/** Chase function */
@@ -44,16 +43,15 @@ public:
 
 	/** Search functions */
 	FVector GetSearchPoint();
-	void MoveToSearchPoint();
+
+	/** Movement function */
+	void MoveToSplinePoints();
 
 	/** Retreat function */
 	void MoveToRetreatPoint(FVector NewLocation);
 
 	/** state check */
 	bool HasReachedLocation(FVector NewLocation, float ReachThreshold);
-
-
-
 
 private:
 	/* Character current location and rotation variables **/

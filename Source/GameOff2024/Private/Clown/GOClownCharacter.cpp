@@ -86,7 +86,7 @@ void AGOClownCharacter::SetControllerInactive()
 void AGOClownCharacter::SetControllerActive(FVector NewCharacterLocation, FRotator NewCharacterRotation)
 {
 	ClownAIController->SetActive(NewCharacterLocation, NewCharacterRotation);
-	ClownState = EClownState::ECS_Activated;
+	ClownState = EClownState::ECS_GetSearchPoint;
 	bAIActive = true;
 }
 
@@ -142,7 +142,8 @@ void AGOClownCharacter::HandlePatrolState()
 	}
 	else
 	{
-		ClownAIController->MoveToPatrolPoint();
+		ClownAIController->MoveToSplinePoints();
+		//ClownAIController->MoveToPatrolPoint();
 	}
 
 	// Transition to Chase State if player detected
@@ -204,7 +205,8 @@ void AGOClownCharacter::HandleSearchState()
 	}
 	else
 	{
-		ClownAIController->MoveToSearchPoint();
+		ClownAIController->MoveToSplinePoints();
+		//ClownAIController->MoveToSearchPoint();
 	}
 
 	// Transition to Chase State if player detected
