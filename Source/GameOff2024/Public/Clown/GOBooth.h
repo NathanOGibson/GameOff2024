@@ -7,6 +7,7 @@
 #include "GOBooth.generated.h"
 
 class AGOPropController;
+class UBillboardComponent;
 
 UCLASS()
 class GAMEOFF2024_API AGOBooth : public AActor

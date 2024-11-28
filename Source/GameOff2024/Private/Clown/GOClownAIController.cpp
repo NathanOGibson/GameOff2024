@@ -265,7 +265,7 @@ FVector AGOClownAIController::GetSearchPoint()
 {
 	if (!Player) return FVector::ZeroVector;
 
-	DrawDebugSphere(GetWorld(), CharacterLocation, 500.f, 8, FColor::Yellow, false, 100.f);
+	//DrawDebugSphere(GetWorld(), CharacterLocation, 500.f, 8, FColor::Yellow, false, 100.f);
 
 	UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, CharacterLocation, Player->GetActorLocation());
 	if (!NavPath || !NavPath->IsValid() || NavPath->PathPoints.Num() == 0)
@@ -280,7 +280,7 @@ FVector AGOClownAIController::GetSearchPoint()
 	SplinePath->ClearSplinePoints();
 	for (const FVector& PathPoint : NavPath->PathPoints)
 	{
-		DrawDebugSphere(GetWorld(), PathPoint, 50.f, 8, FColor::Red, false, 100.f);
+		//DrawDebugSphere(GetWorld(), PathPoint, 50.f, 8, FColor::Red, false, 100.f);
 		SplinePath->AddSplinePoint(PathPoint, ESplineCoordinateSpace::World);
 	}
 
