@@ -203,6 +203,7 @@ void AGOClownCharacter::HandleSearchState()
 	}
 	else
 	{
+		SearchDelay(SearchDelayAmount);
 		ClownAIController->MoveToSplinePoints();
 		//ClownAIController->MoveToSearchPoint();
 	}
