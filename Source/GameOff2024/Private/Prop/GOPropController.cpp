@@ -157,15 +157,15 @@ USceneComponent* AGOPropController::GetFurthestSpawnPoint(TArray<USceneComponent
 {
 	USceneComponent* FurthestSpawnPoint = nullptr;  // Variable to store the furthest spawn point
 	float FurthestDistance = -1.f;                  // Variable to track the furthest distance found
-	float SkipChance = 0.2f;                        // 20% chance to randomly skip a spawn point
+	float ChoseChance = 0.15f;                        // 15% chance to randomly skip a spawn point
 
 	// Loop through each potential spawn point in ChildrenPoints
 	for (USceneComponent* SpawnPoint : ChildrenPoints)
 	{
-		// Random chance to skip the current spawn point (based on SkipChance)
-		if (FMath::FRand() < SkipChance)
+		// Random chance to chose the current spawn point (based on ChoseChance)
+		if (FMath::FRand() < ChoseChance)
 		{
-			continue;  // Skip this iteration if the random chance is below the threshold
+			return SpawnPoint;
 		}
 
 		float ClosestDistanceToStart = FLT_MAX;  // Initialize to a large value for distance comparison
